@@ -8,12 +8,10 @@ import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.rabbitmq._
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.messaging.ActorErrorHandler
-import com.blinkbox.books.rabbitmq.RabbitMqConsumer.QueueConfiguration
-import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.Logging
-import java.util.concurrent.TimeUnit
-import scala.concurrent.duration._
 
+import scala.slick.driver.{JdbcProfile, MySQLDriver}
+import scala.slick.jdbc.JdbcBackend.Database
 /**
  * The main entry point of the credit offer service.
  */

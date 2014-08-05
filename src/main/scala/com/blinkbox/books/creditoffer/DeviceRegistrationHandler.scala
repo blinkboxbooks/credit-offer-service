@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import com.blinkbox.books.messaging.ErrorHandler
 import com.blinkbox.books.messaging.Event
 import com.blinkbox.books.messaging.ReliableEventHandler
+import com.typesafe.scalalogging.slf4j.Logging
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 
@@ -19,10 +20,12 @@ import scala.concurrent.Future
  */
 class DeviceRegistrationHandler(offerDao: OfferHistoryDao, mailEventOutput: ActorRef, reportingEventOutput: ActorRef,
   errorHandler: ErrorHandler, retryInterval: FiniteDuration)
-  extends ReliableEventHandler(errorHandler, retryInterval) {
+  extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
 
-  override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] = ???
+  override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] = Future {
+    logger.info(event.toString)
+  }
 
-  override def isTemporaryFailure(e: Throwable): Boolean = ???
+  override def isTemporaryFailure(e: Throwable): Boolean = true
 
 }

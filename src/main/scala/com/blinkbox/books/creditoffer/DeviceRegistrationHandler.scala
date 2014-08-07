@@ -22,9 +22,10 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryDao, mailEventOutput: Acto
   errorHandler: ErrorHandler, retryInterval: FiniteDuration)
   extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
 
-  override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] = Future {
-    logger.info(event.toString)
-  }
+  override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] =
+    for (
+      deviceRegistration <- Future(DeviceRegistrationEvent.fromXML(event.body.content))
+    ) yield()
 
   override def isTemporaryFailure(e: Throwable): Boolean = true
 

@@ -19,7 +19,7 @@ import scala.concurrent.duration._
  */
 object CreditOfferService extends App with Configuration with Logging with Loggers {
 
-  logger.info(s"Starting purchase-transformer service with config: $config")
+  logger.info(s"Starting Credit Offer service with config: $config")
 
   // Get configuration
   val appConfig = AppConfig(config)
@@ -29,11 +29,10 @@ object CreditOfferService extends App with Configuration with Logging with Logge
   val publisherConnection = RabbitMq.recoveredConnection(RabbitMqConfig(config))
 
   private def publisher(config: PublisherConfiguration, actorName: String) =
-    system.actorOf(Props(new RabbitMqConfirmedPublisher(publisherConnection, config)),
-      name = actorName)
+    system.actorOf(Props(new RabbitMqConfirmedPublisher(publisherConnection, config)), name = actorName)
 
   // Initialise the actor system.
-  implicit val system = ActorSystem("purchase-transformer-service")
+  implicit val system = ActorSystem("credit-offer-service")
   implicit val ec = system.dispatcher
   implicit val requestTimeout = Timeout(appConfig.requestTimeout)
 
@@ -50,12 +49,12 @@ object CreditOfferService extends App with Configuration with Logging with Logge
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, exactTargetPublisher, reportingPublisher, deviceRegErrorHandler, appConfig.retryTime)),
-    name = "email-message-handler")
+    name = "device-registration-event-handler")
 
   // Create the actor that consumes messages from RabbitMQ, and kick it off.
   system.actorOf(Props(new RabbitMqConsumer(consumerConnection.createChannel, appConfig.input,
-    "email-msg-consumer", deviceRegistrationHandler)),
-    name = "email-listener")
+    "credit-offer-consumer", deviceRegistrationHandler)),
+    name = "device-registration-event-listener")
     .tell(RabbitMqConsumer.Init, null)
 
   logger.info("Started")

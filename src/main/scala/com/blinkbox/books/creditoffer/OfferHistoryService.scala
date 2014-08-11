@@ -3,7 +3,7 @@ package com.blinkbox.books.creditoffer
 import com.blinkbox.books.creditoffer.persistence.cake.DatabaseTypes
 import com.blinkbox.books.creditoffer.persistence.data.PromotionRepository
 import com.blinkbox.books.creditoffer.persistence.models.{Promotion, PromotionId}
-import org.joda.time.DateTime
+import org.joda.time.{DateTimeZone, DateTime}
 
 /**
  * Interface for accessing persistently stored data about offers that have been
@@ -29,7 +29,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
 
   def grant(userId: Int, offerId: String) {
     db.withSession { implicit session =>
-      promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now))
+      promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now(DateTimeZone.UTC)))
     }
   }
 
@@ -44,7 +44,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] = {
     db.withSession { implicit session =>
-      promotionRepo.findGrantedOffersForUser(userId).map(promotion => new GrantedOffer(userId, promotion.promotionId, promotion.createdAt))
+      promotionRepo.findGrantedOffersForUser(userId).map(promotion => new GrantedOffer(userId, promotion.offerId, promotion.createdAt))
     }
   }
 

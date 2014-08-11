@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.slf4j.Logging
  * The main entry point of the credit offer service.
  */
 object CreditOfferService extends App with Configuration with Logging with Loggers
-  with DefaultDatabaseComponent with DefaultRepositoriesComponent{
+  with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
   logger.info(s"Starting Credit Offer service with config: $config")
 

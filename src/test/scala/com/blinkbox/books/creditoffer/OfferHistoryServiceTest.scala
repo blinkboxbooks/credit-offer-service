@@ -45,14 +45,12 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   after {
     db.withSession { implicit session =>
       tables.promotions.mutate(_.delete)
-      tables.reports.mutate(_.delete)
     }
   }
 
   "The database connection" should "have the schema created successfully" in {
-    databaseTables.size shouldBe 2
+    databaseTables.size shouldBe 1
     databaseTables.count(_.name.name.equalsIgnoreCase("promotions")) shouldBe 1
-    databaseTables.count(_.name.name.equalsIgnoreCase("reports")) shouldBe 1
   }
 
   it should "be able to create Promotion entries successfully" in {
@@ -61,14 +59,6 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
       size shouldBe 1
     }
   }
-
-  it should "be able to create Result entries successfully" in {
-    db.withSession { implicit session =>
-      val size = tables.reports += new Report(ReportId(1), 101, "sample_report", DateTime.now)
-      size shouldBe 1
-    }
-  }
-
 
   "DbOfferHistoryDao" should "be able grant a user an offer by adding a promotion to the database" in {
     db.withSession { implicit session =>

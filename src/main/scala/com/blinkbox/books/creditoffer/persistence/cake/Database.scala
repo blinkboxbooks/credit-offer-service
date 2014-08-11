@@ -26,7 +26,6 @@ trait DatabaseComponent[DbTypes <: DatabaseTypes] {
 
 trait RepositoriesComponent[DbTypes <: DatabaseTypes] {
   def promotionRepository: PromotionRepository[DbTypes#Profile]
-  def reportRepository: ReportRepository[DbTypes#Profile]
 }
 
 trait DefaultDatabaseTypes extends DatabaseTypes {
@@ -49,6 +48,5 @@ trait DefaultRepositoriesComponent extends RepositoriesComponent[DefaultDatabase
   this: DatabaseComponent[DefaultDatabaseTypes] =>
 
   override val promotionRepository = new DefaultPromotionRepository(tables)
-  override val reportRepository = new DefaultReportRepository(tables)
 }
 

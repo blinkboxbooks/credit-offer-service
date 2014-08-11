@@ -1,4 +1,5 @@
-package com.blinkbox.books.creditoffer.persistance.support
+package com.blinkbox.books.creditoffer.persistence.support
+
 import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.slick.driver.JdbcProfile

@@ -25,7 +25,7 @@ val dependencySettings = Seq(
     "com.typesafe.akka"         %% "akka-actor"           % akkaV,
     "com.typesafe.akka"         %% "akka-slf4j"           % akkaV,
     "com.typesafe.akka"         %% "akka-testkit"         % akkaV       % "test",
-    "com.typesafe.slick"        %% "slick"                % "2.0.1",
+    "com.typesafe.slick"        %% "slick"                % "2.1.0",
     "joda-time"                 %  "joda-time"            % "2.3",
     "org.joda"                  %  "joda-convert"         % "1.6"
     )

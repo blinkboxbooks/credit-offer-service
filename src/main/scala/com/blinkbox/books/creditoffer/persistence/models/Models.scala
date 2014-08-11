@@ -1,4 +1,4 @@
-package com.blinkbox.books.creditoffer.persistance.models
+package com.blinkbox.books.creditoffer.persistence.models
 
 import org.joda.time.DateTime
 

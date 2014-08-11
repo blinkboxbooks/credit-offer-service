@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://schemas.blinkboxbooks.com/messaging/versioning"
+           targetNamespace="http://schemas.blinkboxbooks.com/messaging/versioning"
+           elementFormDefault="qualified"
+           version="1.0">
+
+    <xs:attribute name="version" type="xs:decimal"/>
+</xs:schema>

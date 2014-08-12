@@ -18,7 +18,7 @@ import scala.concurrent.Future
  * - If the event and user qualifies:
  *   Credit the user, update their tracked state, send a message for reporting, and send a message for a confirmation email.
  */
-class DeviceRegistrationHandler(offerDao: OfferHistoryDao, mailEventOutput: ActorRef, reportingEventOutput: ActorRef,
+class DeviceRegistrationHandler(offerDao: OfferHistoryService, mailEventOutput: ActorRef, reportingEventOutput: ActorRef,
   errorHandler: ErrorHandler, retryInterval: FiniteDuration)
   extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
 

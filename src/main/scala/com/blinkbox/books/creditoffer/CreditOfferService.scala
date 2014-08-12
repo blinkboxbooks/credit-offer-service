@@ -1,28 +1,25 @@
 package com.blinkbox.books.creditoffer
 
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
-import com.blinkbox.books.logging.Loggers
 import com.blinkbox.books.config.Configuration
-import com.blinkbox.books.rabbitmq._
-import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
+import com.blinkbox.books.creditoffer.persistence.cake._
+import com.blinkbox.books.logging.Loggers
 import com.blinkbox.books.messaging.ActorErrorHandler
-import com.blinkbox.books.rabbitmq.RabbitMqConsumer.QueueConfiguration
-import com.typesafe.config.Config
+import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
+import com.blinkbox.books.rabbitmq._
 import com.typesafe.scalalogging.slf4j.Logging
-import java.util.concurrent.TimeUnit
-import scala.concurrent.duration._
-
 /**
  * The main entry point of the credit offer service.
  */
-object CreditOfferService extends App with Configuration with Logging with Loggers {
+object CreditOfferService extends App with Configuration with Logging with Loggers
+  with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
   logger.info(s"Starting Credit Offer service with config: $config")
 
   // Get configuration
   val appConfig = AppConfig(config)
+  override def dbSettings = appConfig.db
   val rabbitMqConfig = RabbitMqConfig(config)
 
   val consumerConnection = RabbitMq.reliableConnection(RabbitMqConfig(config))
@@ -37,9 +34,7 @@ object CreditOfferService extends App with Configuration with Logging with Logge
   implicit val requestTimeout = Timeout(appConfig.requestTimeout)
 
   // Connect to DB.
-  val dbConfig = appConfig.db
-  // TODO: Pass in the necessary parameters.
-  val offerDao = new DbOfferHistoryDao()
+  val offerDao = new DefaultOfferHistoryService[DefaultDatabaseTypes](db, promotionRepository)
 
   logger.debug("Initialising actors")
 

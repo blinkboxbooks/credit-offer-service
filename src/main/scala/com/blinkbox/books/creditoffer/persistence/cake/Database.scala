@@ -1,10 +1,12 @@
 package com.blinkbox.books.creditoffer.persistence.cake
 
 import java.sql.SQLIntegrityConstraintViolationException
+import javax.sql.DataSource
 
 import com.blinkbox.books.creditoffer.DbConfig
 import com.blinkbox.books.creditoffer.persistence.data._
 import com.blinkbox.books.creditoffer.persistence.models.PromotionTables
+import org.apache.commons.dbcp.BasicDataSource
 
 import scala.reflect._
 import scala.slick.driver.{JdbcProfile, MySQLDriver}
@@ -36,11 +38,17 @@ trait DefaultDatabaseTypes extends DatabaseTypes {
 trait DefaultDatabaseComponent extends DatabaseComponent[DefaultDatabaseTypes] {
   override val driver = MySQLDriver
   override val tables = PromotionTables(driver)
-  override val db = Database.forURL(
-    dbSettings.url.toString,
-    driver = "com.mysql.jdbc.Driver",
-    user = dbSettings.username,
-    password = dbSettings.password)
+  override lazy val db = Database.forDataSource(dataSource)
+  lazy val dataSource : DataSource = {
+    val ds = new BasicDataSource
+    ds.setDriverClassName("com.mysql.jdbc.Driver")
+    ds.setUsername(dbSettings.username)
+    ds.setPassword(dbSettings.password)
+    ds.setMaxActive(20)
+    ds.setMaxIdle(10)
+    ds.setUrl(dbSettings.url.toString)
+    ds
+  }
   def dbSettings: DbConfig
 }
 

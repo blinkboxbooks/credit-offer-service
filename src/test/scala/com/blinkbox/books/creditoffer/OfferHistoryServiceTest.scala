@@ -15,7 +15,7 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
 
   import tables.driver.simple._
 
-  var databaseTables : List[MTable] = _
+
 
   var testDatabase : tables.driver.backend.Database = _
   var historyDao : DefaultOfferHistoryService[TestDatabaseTypes] = _
@@ -35,9 +35,7 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   }
 
   before {
-    db.withSession { implicit session =>
-      databaseTables = getTables(Some(""), Some(""), None, None).list
-    }
+
     historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository)
     populateDatabase
   }
@@ -49,8 +47,11 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   }
 
   "The database connection" should "have the schema created successfully" in {
-    databaseTables.size shouldBe 1
-    databaseTables.count(_.name.name.equalsIgnoreCase("promotions")) shouldBe 1
+    db.withSession { implicit session =>
+      val databaseTables = getTables(Some(""), Some(""), None, None).list
+      databaseTables.size shouldBe 1
+      databaseTables.count(_.name.name.equalsIgnoreCase("promotions")) shouldBe 1
+    }
   }
 
   it should "be able to create Promotion entries successfully" in {
@@ -85,6 +86,9 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
 
   it should "list all offers granted to a single user correctly" in {
     populateDatabase
+//    var offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
+//    offersOfFirstUser.size should be 2
+    
   }
 
   it should "list all users under a single promotional offer" in {

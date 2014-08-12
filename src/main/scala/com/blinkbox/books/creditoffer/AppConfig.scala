@@ -7,7 +7,6 @@ import com.typesafe.config.Config
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher
 
@@ -26,6 +25,7 @@ case class DbConfig(
   username: String,
   password: String)
 
+case class AdminAccountCreditClientConfig(url: URL, timeout: FiniteDuration)
 object AppConfig {
   def apply(config: Config): AppConfig = {
     val serviceConfig = config.getConfig("service.creditOffer")
@@ -47,4 +47,11 @@ object DbConfig {
       config.getUri("url"),
       config.getString("username"),
       config.getString("password"))
+}
+
+object AdminAccountCreditClientConfig {
+  def apply(config: Config): AdminAccountCreditClientConfig = AdminAccountCreditClientConfig(
+    config.getHttpUrl("service.adminaccountcredit.api.admin.internalUrl"),
+    config.getDuration("service.adminaccountcredit.api.admin.timeout", TimeUnit.MILLISECONDS).millis
+  )
 }

@@ -17,7 +17,7 @@ import scala.concurrent.Future
 trait AuthService {
   def authenticate(): Future[AuthTokens]
   def authenticate(refreshToken: String): Future[AuthTokens]
-  def userProfile(userId: Int): UserProfile
+  def userProfile(userId: Int): Future[UserProfile]
 }
 
 case class AuthTokens(access_token: String, refresh_token: String)
@@ -52,7 +52,7 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
     case resp if resp.status == TooManyRequests => throw ThrottledException(resp.entity.data.asString) // TODO: include Retry-After header info
   }
 
-  override def userProfile(userId: String): UserProfile = ???
+  override def userProfile(userId: Int): Future[UserProfile] = ???
 }
 
 object AuthServiceClient {

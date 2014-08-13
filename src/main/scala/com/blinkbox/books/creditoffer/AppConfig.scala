@@ -7,11 +7,14 @@ import com.typesafe.config.Config
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import scala.collection.JavaConverters._
+import org.joda.money.{CurrencyUnit, Money}
+
 import scala.concurrent.duration._
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher
 
 case class AppConfig(
+  creditLimit: Money,
+  creditAmount: Money,
   retryTime: FiniteDuration,
   requestTimeout: FiniteDuration,
   accountCreditService: URL,
@@ -30,6 +33,8 @@ object AppConfig {
   def apply(config: Config): AppConfig = {
     val serviceConfig = config.getConfig("service.creditOffer")
     AppConfig(
+      Money.of(CurrencyUnit.of("GBP"), serviceConfig.getDouble("creditLimit")),
+      Money.of(CurrencyUnit.of("GBP"), serviceConfig.getDouble("creditAmount")),
       serviceConfig.getDuration("retryTime", TimeUnit.MILLISECONDS).millis,
       serviceConfig.getDuration("requestTimeout", TimeUnit.MILLISECONDS).millis,
       serviceConfig.getUrl("accountCreditService.url"),

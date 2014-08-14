@@ -8,6 +8,7 @@ import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.User.Credited
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import org.joda.money.Money
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -19,7 +20,7 @@ trait EventSender {
   /**
    *  Send event fire-and-forget style, the implementations will handle retrying on failure.
    */
-  def sendEvent(user: User, credited: BigDecimal, currency: String, offer: String): Unit
+  def sendEvent(user: User, creditedAmount: Money, offer: String): Unit
 
 }
 
@@ -30,22 +31,23 @@ object EventSender {
 // Publish Email XML message to Mailer's exchange. 
 class MailerEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
-  override def sendEvent(user: User, credited: BigDecimal, currency: String, offer: String) = ???
+  override def sendEvent(user: User, creditedAmount: Money, offer: String) = ???
 
 }
 
 // Publish Exact Target JSON message to Agora header exchange. 
 class ExactTargetEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
-  override def sendEvent(user: User, credited: BigDecimal, currency: String, offer: String) = ???
+  override def sendEvent(user: User, creditedAmount: Money, offer: String) = ???
 
 }
 
 // Publish User.Credited JSON message to Agora header exchange.
 class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
-  override def sendEvent(user: User, credited: BigDecimal, currency: String, offer: String) = {
-    val creditEvent = User.Credited(DateTime.now(DateTimeZone.UTC), user, credited, currency, offer)
+  override def sendEvent(user: User, creditedAmount: Money, offer: String) = {
+    val creditEvent = User.Credited(DateTime.now(DateTimeZone.UTC), user,
+      creditedAmount.getAmount, creditedAmount.getCurrencyUnit.getCurrencyCode, offer)
     val header = EventHeader(EventSender.Originator)
     delegate ! Event.json(header, creditEvent)
   }
@@ -54,6 +56,6 @@ class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, ti
 
 /** Pass on event to a number of event senders. */
 class CompoundEventSender(delegates: Seq[EventSender]) extends EventSender {
-  override def sendEvent(user: User, credited: BigDecimal, currency: String, offer: String) =
-    delegates.foreach(delegate => Try(delegate.sendEvent(user, credited, currency, offer)))
+  override def sendEvent(user: User, creditedAmount: Money, offer: String) =
+    delegates.foreach(delegate => Try(delegate.sendEvent(user, creditedAmount, offer)))
 }

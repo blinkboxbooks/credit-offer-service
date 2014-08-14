@@ -10,12 +10,12 @@ import com.blinkbox.books.logging.Loggers
 import com.blinkbox.books.messaging.ActorErrorHandler
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.rabbitmq._
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.StrictLogging
 
 /**
  * The main entry point of the credit offer service.
  */
-object CreditOfferService extends App with Configuration with Logging with Loggers
+object CreditOfferService extends App with Configuration with StrictLogging with Loggers
 with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
   logger.info(s"Starting Credit Offer service with config: $config")

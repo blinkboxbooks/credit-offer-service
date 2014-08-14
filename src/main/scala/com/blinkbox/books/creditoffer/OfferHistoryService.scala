@@ -28,9 +28,9 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   db: DbTypes#Database,
   promotionRepo: PromotionRepository[DbTypes#Profile],
   creditAmount: Money,
-  creditLimit: Money ) extends OfferHistoryService {
+  creditLimit: Money) extends OfferHistoryService {
 
-  def grant(userId: Int, offerId: String) : Option[GrantedOffer] = {
+  def grant(userId: Int, offerId: String): Option[GrantedOffer] =
     db.withSession { implicit session =>
       session.withTransaction {
         val newTotalCreditAmount = promotionRepo.totalCreditedAmount.plus(creditAmount)
@@ -40,29 +40,25 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         if (canOffer) {
           val createdTime = DateTime.now(DateTimeZone.UTC)
           promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
-          Some(GrantedOffer(userId, offerId, creditAmount,createdTime))
+          Some(GrantedOffer(userId, offerId, creditAmount, createdTime))
         } else {
           None
         }
-
       }
     }
-  }
 
-  def isGranted(userId: Int, offerId: String): Boolean = {
+  def isGranted(userId: Int, offerId: String): Boolean =
     db.withSession(implicit session => promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined)
-  }
 
-  def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] = {
+  def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] =
     db.withSession { implicit session =>
       promotionRepo.findGrantedOffersForUser(userId).map(promotion =>
         new GrantedOffer(userId, promotion.offerId, promotion.creditedAmount, promotion.createdAt))
     }
-  }
 
-  def listAllGrantedUsersForOffer(offerId: String): Seq[GrantedOffer] = {
+  def listAllGrantedUsersForOffer(offerId: String): Seq[GrantedOffer] =
     db.withSession { implicit session =>
-      promotionRepo.findAllUsersUsingOffer(offerId).map(promotion => new GrantedOffer(promotion.userId, offerId, promotion.creditedAmount, promotion.createdAt))
+      promotionRepo.findAllUsersUsingOffer(offerId)
+        .map(promotion => new GrantedOffer(promotion.userId, offerId, promotion.creditedAmount, promotion.createdAt))
     }
-  }
 }

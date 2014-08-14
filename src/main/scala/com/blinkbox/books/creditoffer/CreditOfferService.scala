@@ -2,6 +2,8 @@ package com.blinkbox.books.creditoffer
 
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
+import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditServiceClient
+import com.blinkbox.books.clients.authservice.AuthServiceClient
 import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.creditoffer.persistence.cake._
 import com.blinkbox.books.logging.Loggers
@@ -35,9 +37,12 @@ with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
   logger.debug("Initialising actors")
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
+
+  val adminAccountCreditService = AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config))
+  val authService = AuthServiceClient(AuthServiceClientConfig(config))
   val deviceRegistrationHandler = system.actorOf(Props(
-    new DeviceRegistrationHandler(offerDao, exactTargetPublisher, reportingPublisher, deviceRegErrorHandler, appConfig.retryTime)),
-    name = "device-registration-event-handler")
+    new DeviceRegistrationHandler(offerDao, adminAccountCreditService, authService, exactTargetPublisher,
+      reportingPublisher, deviceRegErrorHandler, appConfig.retryTime)),name = "device-registration-event-handler")
 
   override def dbSettings = appConfig.db
 

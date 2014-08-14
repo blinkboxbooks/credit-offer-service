@@ -12,7 +12,7 @@ import org.joda.time.{DateTimeZone, DateTime}
  */
 trait OfferHistoryService {
 
-  def grant(userId: Int, offerId: String): Boolean
+  def grant(userId: Int, offerId: String): Option[GrantedOffer]
 
   def isGranted(userId: Int, offerId: String): Boolean
 
@@ -25,12 +25,12 @@ trait OfferHistoryService {
 case class GrantedOffer(userId: Int, offerId: String, createdAt: DateTime)
 
 class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
-    db: DbTypes#Database,
-    promotionRepo: PromotionRepository[DbTypes#Profile],
-    creditAmount: Money,
-    creditLimit: Money ) extends OfferHistoryService {
+  db: DbTypes#Database,
+  promotionRepo: PromotionRepository[DbTypes#Profile],
+  creditAmount: Money,
+  creditLimit: Money ) extends OfferHistoryService {
 
-  def grant(userId: Int, offerId: String) : Boolean = {
+  def grant(userId: Int, offerId: String) : Option[GrantedOffer] = {
     db.withSession { implicit session =>
       session.withTransaction {
         val newTotalCreditAmount = promotionRepo.totalCreditedAmount.plus(creditAmount)
@@ -38,9 +38,13 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         val canOffer = !isGranted(userId, offerId) &&
           (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
         if (canOffer) {
-          promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now(DateTimeZone.UTC), creditAmount))
+          val createdTime = DateTime.now(DateTimeZone.UTC)
+          promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
+          Some(GrantedOffer(userId, offerId, createdTime))
+        } else {
+          None
         }
-        canOffer
+
       }
     }
   }

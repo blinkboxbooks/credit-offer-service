@@ -1,6 +1,6 @@
 package com.blinkbox.books.creditoffer
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.util.Timeout
 import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditServiceClient
 import com.blinkbox.books.clients.authservice.AuthServiceClient
@@ -11,6 +11,7 @@ import com.blinkbox.books.messaging.ActorErrorHandler
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.rabbitmq._
 import com.typesafe.scalalogging.slf4j.Logging
+
 /**
  * The main entry point of the credit offer service.
  */
@@ -45,11 +46,13 @@ object CreditOfferService extends App with Configuration with Logging with Logge
   val reportingPublisher = publisher(appConfig.reportingOutput, "reporting-publisher")
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
 
+  val eventSender = new CompoundEventSender(Seq(new ReportingEventSender(reportingPublisher))) // TODO: Add email sender.
   val adminAccountCreditService = AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config))
   val authService = AuthServiceClient(AuthServiceClientConfig(config))
+  
   val deviceRegistrationHandler = system.actorOf(Props(
-    new DeviceRegistrationHandler(offerDao, adminAccountCreditService, authService, exactTargetPublisher,
-      reportingPublisher, deviceRegErrorHandler, appConfig.retryTime)),name = "device-registration-event-handler")
+    new DeviceRegistrationHandler(offerDao, adminAccountCreditService, authService, eventSender,
+      deviceRegErrorHandler, appConfig.retryTime)), name = "device-registration-event-handler")
 
   // Create the actor that consumes messages from RabbitMQ, and kick it off.
   system.actorOf(Props(new RabbitMqConsumer(consumerConnection.createChannel, appConfig.input,

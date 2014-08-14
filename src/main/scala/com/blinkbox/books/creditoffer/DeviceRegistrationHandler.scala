@@ -9,6 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditService
 import com.blinkbox.books.clients.authservice.{UserProfile, AuthService}
+
 /**
  * Actor that processes device registrations.
  *
@@ -19,10 +20,10 @@ import com.blinkbox.books.clients.authservice.{UserProfile, AuthService}
  * - If the event and user qualifies:
  *   Credit the user, update their tracked state, send a message for reporting, and send a message for a confirmation email.
  */
-class DeviceRegistrationHandler(offerDao: OfferHistoryService, adminAccountCreditService: AdminAccountCreditService, authService: AuthService,
-                                mailEventOutput: ActorRef, reportingEventOutput: ActorRef, errorHandler: ErrorHandler,
-                                retryInterval: FiniteDuration) extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
-
+class DeviceRegistrationHandler(offerDao: OfferHistoryService,
+  adminAccountCreditService: AdminAccountCreditService, authService: AuthService,
+  eventSender: EventSender, errorHandler: ErrorHandler, retryInterval: FiniteDuration)
+  extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
 
   override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] =
     for (
@@ -33,9 +34,9 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService, adminAccountCredi
       _ = offerDao.grant(userId, "HUDL2") if !granted;
       accountCredit = adminAccountCreditService.addCredit(userId, BigDecimal("10.0"), "GBP", "token");
       _ = sendMessages(userProfile, BigDecimal("10.0"), "GBP", "HUDL2")
-    ) yield()
+    ) yield ()
 
-  override def isTemporaryFailure(e: Throwable): Boolean = true
+  override def isTemporaryFailure(e: Throwable): Boolean = ???
 
   def isHudl2(event: DeviceRegistrationEvent): Boolean = ???
   def sendMessages(userDetails: UserProfile, credited: BigDecimal, currency: String, offer: String) = ???

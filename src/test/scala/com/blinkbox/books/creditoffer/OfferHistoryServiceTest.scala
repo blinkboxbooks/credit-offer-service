@@ -9,7 +9,7 @@ import org.scalatest.{Matchers, BeforeAndAfter, FlatSpec}
 import scala.slick.jdbc.meta.MTable._
 
 class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
-  with TestDatabaseComponent with TestRepositoriesComponent {
+with TestDatabaseComponent with TestRepositoriesComponent {
 
   import tables.driver.simple._
 
@@ -87,33 +87,41 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   it should "list all offers granted to a single user correctly" in {
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
     offersOfFirstUser.size shouldBe 2
-    offersOfFirstUser.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
-    offersOfFirstUser.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
+    offersOfFirstUser.exists(
+      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    offersOfFirstUser.exists(
+      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
 
     val offersOfSecondUser = historyDao.listGrantedOffersForUser(secondUserId)
     offersOfSecondUser.size shouldBe 2
-    offersOfSecondUser.exists(o => o.offerId == firstOffer && o.userId == secondUserId) shouldBe true
-    offersOfSecondUser.exists(o => o.offerId == secondOffer && o.userId == secondUserId) shouldBe true
+    offersOfSecondUser.exists(
+      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
+    offersOfSecondUser.exists(
+      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
   }
 
   it should "list all users under a single promotional offer" in {
 
     val usersUsingFirstOffer = historyDao.listAllGrantedUsersForOffer(firstOffer)
     usersUsingFirstOffer.size shouldBe 2
-    usersUsingFirstOffer.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
-    usersUsingFirstOffer.exists(o => o.offerId == firstOffer && o.userId == secondUserId) shouldBe true
+    usersUsingFirstOffer.exists(
+      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    usersUsingFirstOffer.exists(
+      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
 
     val usersUsingSecondOffer = historyDao.listAllGrantedUsersForOffer(secondOffer)
     usersUsingSecondOffer.size shouldBe 2
-    usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
-    usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == secondUserId) shouldBe true
+    usersUsingSecondOffer.exists(
+      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    usersUsingSecondOffer.exists(
+      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
 
   }
 
   it should "not give a promotion when the Credit Limit has been reached " in {
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
     historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
-    historyDao.grant(firstUserId, newOffer) shouldBe false
+    historyDao.grant(firstUserId, newOffer) shouldBe None
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
 
     // Make sure the new offer is not in the DB and that the offers that are there already are not effected
@@ -131,7 +139,7 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
 
     // Make sure that the offer has already been granted before attempting to grant it again
     historyDao.isGranted(firstUserId, firstOffer) shouldBe true
-    historyDao.grant(firstUserId, firstOffer) shouldBe false
+    historyDao.grant(firstUserId, firstOffer) shouldBe None
 
     // Make sure that the offer did not get written twice into the database by accident
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
@@ -147,7 +155,10 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
 
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
     historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
-    historyDao.grant(firstUserId, newOffer) shouldBe true
+    val granted = historyDao.grant(firstUserId, newOffer)
+    granted.get.userId shouldBe firstUserId
+    granted.get.offerId shouldBe newOffer
+    granted.get.creditedAmount shouldBe creditedAmount
 
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
     offersOfFirstUser.exists(o => o.offerId == newOffer && o.userId == firstUserId) shouldBe true

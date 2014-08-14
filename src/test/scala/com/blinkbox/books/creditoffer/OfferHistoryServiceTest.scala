@@ -48,8 +48,6 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
     resetDatabase
   }
 
-
-
   "The database connection" should "have the schema created successfully" in {
     db.withSession { implicit session =>
       val databaseTables = getTables(Some(""), Some(""), None, None).list
@@ -124,7 +122,7 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
     offersOfFirstUser.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
   }
 
-  it should "not give a promotion to a user if he has received it already" in {
+  it should "not give a promotion to a user if the user has received it already" in {
     // Create a service with a much higher credit limit and repopulate it
     resetDatabase
     val newCreditLimit = creditLimit.plus(1000.0)
@@ -139,4 +137,20 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
     offersOfFirstUser.count(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe 1
   }
+
+  it should "allow a promotion to be granted to a user if it culminates to the exact credit limit at the end" in {
+    // Testing the edge case of the totalCreditedAmount + newOfferAmount equals the creditLimit
+    resetDatabase
+    val newCreditLimit = creditLimit.plus(10.0)
+    historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, newCreditLimit)
+    populateDatabase
+
+    val newOffer = "Super Duper Mighty Morphin Offer Time!"
+    historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    historyDao.grant(firstUserId, newOffer) shouldBe true
+
+    val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
+    offersOfFirstUser.exists(o => o.offerId == newOffer && o.userId == firstUserId) shouldBe true
+  }
+
 }

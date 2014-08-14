@@ -33,8 +33,10 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   def grant(userId: Int, offerId: String) : Boolean = {
     db.withSession { implicit session =>
       session.withTransaction {
+        val newTotalCreditAmount = promotionRepo.totalCreditedAmount.plus(creditAmount)
         // Check the offer has not been given beforehand and that adding it will not exceed the credit limits
-        val canOffer = !isGranted(userId, offerId) && promotionRepo.totalCreditedAmount.plus(creditAmount).isLessThan(creditLimit)
+        val canOffer = !isGranted(userId, offerId) &&
+          (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
         if (canOffer) {
           promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now(DateTimeZone.UTC), creditAmount))
         }

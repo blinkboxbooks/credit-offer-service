@@ -2,6 +2,7 @@ package com.blinkbox.books.creditoffer.persistence.data
 
 import com.blinkbox.books.creditoffer.persistence.support.SlickSupport
 import com.blinkbox.books.creditoffer.persistence.models._
+import org.joda.money.{CurrencyUnit, Money}
 
 import scala.slick.driver.JdbcProfile
 import scala.slick.profile.BasicProfile
@@ -15,6 +16,7 @@ trait PromotionRepository[Profile <: BasicProfile] extends SlickSupport[Profile]
   def insert(feature: Promotion)(implicit session: Session): Int
   def update(feature: Promotion)(implicit session: Session): Int
   def delete(id: PromotionId)(implicit session: Session): Int
+  def totalCreditedAmount()(implicit session: Session): Money
 }
 
 trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with PromotionTables {
@@ -43,6 +45,18 @@ trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with Prom
 
   override def delete(id: PromotionId)(implicit session: Session) =
     promotions.filter(_.id === id).delete
+
+  override def totalCreditedAmount()(implicit session: Session): Money = {
+    Money.of(CurrencyUnit.of("GBP"), sumOfTotalCreditedAmount.bigDecimal)
+  }
+
+  def sumOfTotalCreditedAmount()(implicit session: Session): BigDecimal = {
+    promotions.map(_.creditedAmount).sum.run match {
+      case Some(s) => s
+      case None => BigDecimal(0) // None usually occurs when there are no entries in the database
+    }
+  }
+
 }
 
 class DefaultPromotionRepository(val tables: PromotionTables) extends PromotionTablesSupport with JdbcPromotionRepository

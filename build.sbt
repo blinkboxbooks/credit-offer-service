@@ -23,14 +23,15 @@ val dependencySettings = Seq(
     "io.spray"                   %         "spray-httpx"            % sprayV,
     "io.spray"                  %%         "spray-json"             % "1.2.6",
     "org.json4s"                %%         "json4s-jackson"         % "3.2.10",
-    "com.h2database"             %         "h2"                     % "1.3.173" % "test",
-    "xmlunit"                    %         "xmlunit"                % "1.5" % "test",
+    "com.h2database"             %         "h2"                     % "1.3.173"                 % "test",
+    "xmlunit"                    %         "xmlunit"                % "1.5"                     % "test",
     "com.typesafe.akka"         %%         "akka-actor"             % akkaV,
     "com.typesafe.akka"         %%         "akka-slf4j"             % akkaV,
-    "com.typesafe.akka"         %%         "akka-testkit"           % akkaV % "test",
+    "com.typesafe.akka"         %%         "akka-testkit"           % akkaV                     % "test",
     "com.typesafe.slick"        %%         "slick"                  % "2.1.0",
     "joda-time"                  %         "joda-time"              % "2.3",
-    "org.joda"                   %         "joda-convert"           % "1.6"
+    "org.joda"                   %         "joda-convert"           % "1.6",
+    "org.joda"                   %         "joda-money"             % "0.9.1"
     )
   }
 )

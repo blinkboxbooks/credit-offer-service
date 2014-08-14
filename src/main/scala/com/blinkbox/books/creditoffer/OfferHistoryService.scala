@@ -22,7 +22,7 @@ trait OfferHistoryService {
 
 }
 
-case class GrantedOffer(userId: Int, offerId: String, createdAt: DateTime)
+case class GrantedOffer(userId: Int, offerId: String, creditedAmount: Money,createdAt: DateTime)
 
 class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   db: DbTypes#Database,
@@ -40,7 +40,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         if (canOffer) {
           val createdTime = DateTime.now(DateTimeZone.UTC)
           promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
-          Some(GrantedOffer(userId, offerId, createdTime))
+          Some(GrantedOffer(userId, offerId, creditAmount,createdTime))
         } else {
           None
         }
@@ -60,13 +60,13 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] = {
     db.withSession { implicit session =>
-      promotionRepo.findGrantedOffersForUser(userId).map(promotion => new GrantedOffer(userId, promotion.offerId, promotion.createdAt))
+      promotionRepo.findGrantedOffersForUser(userId).map(promotion => new GrantedOffer(userId, promotion.offerId, promotion.creditedAmount, promotion.createdAt))
     }
   }
 
   def listAllGrantedUsersForOffer(offerId: String): Seq[GrantedOffer] = {
     db.withSession { implicit session =>
-      promotionRepo.findAllUsersUsingOffer(offerId).map(promotion => new GrantedOffer(promotion.userId, offerId, promotion.createdAt))
+      promotionRepo.findAllUsersUsingOffer(offerId).map(promotion => new GrantedOffer(promotion.userId, offerId, promotion.creditedAmount, promotion.createdAt))
     }
   }
 }

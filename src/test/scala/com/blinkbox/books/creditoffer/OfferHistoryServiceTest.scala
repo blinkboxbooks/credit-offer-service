@@ -87,26 +87,34 @@ with TestDatabaseComponent with TestRepositoriesComponent {
   it should "list all offers granted to a single user correctly" in {
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
     offersOfFirstUser.size shouldBe 2
-    offersOfFirstUser.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
-    offersOfFirstUser.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
+    offersOfFirstUser.exists(
+      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    offersOfFirstUser.exists(
+      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
 
     val offersOfSecondUser = historyDao.listGrantedOffersForUser(secondUserId)
     offersOfSecondUser.size shouldBe 2
-    offersOfSecondUser.exists(o => o.offerId == firstOffer && o.userId == secondUserId) shouldBe true
-    offersOfSecondUser.exists(o => o.offerId == secondOffer && o.userId == secondUserId) shouldBe true
+    offersOfSecondUser.exists(
+      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
+    offersOfSecondUser.exists(
+      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
   }
 
   it should "list all users under a single promotional offer" in {
 
     val usersUsingFirstOffer = historyDao.listAllGrantedUsersForOffer(firstOffer)
     usersUsingFirstOffer.size shouldBe 2
-    usersUsingFirstOffer.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
-    usersUsingFirstOffer.exists(o => o.offerId == firstOffer && o.userId == secondUserId) shouldBe true
+    usersUsingFirstOffer.exists(
+      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    usersUsingFirstOffer.exists(
+      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
 
     val usersUsingSecondOffer = historyDao.listAllGrantedUsersForOffer(secondOffer)
     usersUsingSecondOffer.size shouldBe 2
-    usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
-    usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == secondUserId) shouldBe true
+    usersUsingSecondOffer.exists(
+      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
+    usersUsingSecondOffer.exists(
+      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
 
   }
 
@@ -150,6 +158,7 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     val granted = historyDao.grant(firstUserId, newOffer)
     granted.get.userId shouldBe firstUserId
     granted.get.offerId shouldBe newOffer
+    granted.get.creditedAmount shouldBe creditedAmount
 
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
     offersOfFirstUser.exists(o => o.offerId == newOffer && o.userId == firstUserId) shouldBe true

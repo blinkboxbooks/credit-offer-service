@@ -12,7 +12,7 @@ import org.joda.time.{DateTimeZone, DateTime}
  */
 trait OfferHistoryService {
 
-  def grant(userId: Int, offerId: String): Unit
+  def grant(userId: Int, offerId: String): Boolean
 
   def isGranted(userId: Int, offerId: String): Boolean
 
@@ -30,9 +30,16 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
     creditAmount: Money,
     creditLimit: Money ) extends OfferHistoryService {
 
-  def grant(userId: Int, offerId: String) {
+  def grant(userId: Int, offerId: String) : Boolean = {
     db.withSession { implicit session =>
-      promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now(DateTimeZone.UTC), creditAmount))
+      session.withTransaction {
+        // Check the offer has not been given beforehand and that adding it will not exceed the credit limits
+        val canOffer = !isGranted(userId, offerId) && promotionRepo.totalCreditedAmount.plus(creditAmount).isLessThan(creditLimit)
+        if (canOffer) {
+          promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, DateTime.now(DateTimeZone.UTC), creditAmount))
+        }
+        canOffer
+      }
     }
   }
 

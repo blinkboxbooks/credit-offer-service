@@ -32,6 +32,12 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
     }
   }
 
+  def resetDatabase = {
+    db.withSession { implicit session =>
+      tables.promotions.mutate(_.delete)
+    }
+  }
+
   before {
 
     historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, creditLimit)
@@ -39,10 +45,10 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   }
 
   after {
-    db.withSession { implicit session =>
-      tables.promotions.mutate(_.delete)
-    }
+    resetDatabase
   }
+
+
 
   "The database connection" should "have the schema created successfully" in {
     db.withSession { implicit session =>
@@ -93,6 +99,7 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
   }
 
   it should "list all users under a single promotional offer" in {
+
     val usersUsingFirstOffer = historyDao.listAllGrantedUsersForOffer(firstOffer)
     usersUsingFirstOffer.size shouldBe 2
     usersUsingFirstOffer.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
@@ -102,5 +109,34 @@ class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
     usersUsingSecondOffer.size shouldBe 2
     usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
     usersUsingSecondOffer.exists(o => o.offerId == secondOffer && o.userId == secondUserId) shouldBe true
+
+  }
+
+  it should "not give a promotion when the Credit Limit has been reached " in {
+    val newOffer = "Super Duper Mighty Morphin Offer Time!"
+    historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    historyDao.grant(firstUserId, newOffer) shouldBe false
+    val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
+
+    // Make sure the new offer is not in the DB and that the offers that are there already are not effected
+    offersOfFirstUser.exists(o => o.offerId == newOffer && o.userId == firstUserId) shouldBe false
+    offersOfFirstUser.exists(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe true
+    offersOfFirstUser.exists(o => o.offerId == secondOffer && o.userId == firstUserId) shouldBe true
+  }
+
+  it should "not give a promotion to a user if he has received it already" in {
+    // Create a service with a much higher credit limit and repopulate it
+    resetDatabase
+    val newCreditLimit = creditLimit.plus(1000.0)
+    historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, newCreditLimit)
+    populateDatabase
+
+    // Make sure that the offer has already been granted before attempting to grant it again
+    historyDao.isGranted(firstUserId, firstOffer) shouldBe true
+    historyDao.grant(firstUserId, firstOffer) shouldBe false
+
+    // Make sure that the offer did not get written twice into the database by accident
+    val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
+    offersOfFirstUser.count(o => o.offerId == firstOffer && o.userId == firstUserId) shouldBe 1
   }
 }

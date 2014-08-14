@@ -50,14 +50,13 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   }
 
   def isGranted(userId: Int, offerId: String): Boolean = {
-    db.withSession { implicit session =>
-      promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined
-    }
+    db.withSession(implicit session => promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined)
   }
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] = {
     db.withSession { implicit session =>
-      promotionRepo.findGrantedOffersForUser(userId).map(promotion => new GrantedOffer(userId, promotion.offerId, promotion.creditedAmount, promotion.createdAt))
+      promotionRepo.findGrantedOffersForUser(userId).map(promotion =>
+        new GrantedOffer(userId, promotion.offerId, promotion.creditedAmount, promotion.createdAt))
     }
   }
 

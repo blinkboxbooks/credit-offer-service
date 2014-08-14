@@ -51,10 +51,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
 
   def isGranted(userId: Int, offerId: String): Boolean = {
     db.withSession { implicit session =>
-      promotionRepo.findByUserIdAndOfferId(userId, offerId) match {
-        case Some(_) => true
-        case None => false
-      }
+      promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined
     }
   }
 

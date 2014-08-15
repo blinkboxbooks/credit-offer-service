@@ -19,7 +19,7 @@ case class AccountCredit(amount: BigDecimal, currency: String)
 case class AccountCreditReq(amount: BigDecimal, currency: String, reason: String)
 
 trait AdminAccountCreditService {
-  def addCredit(userId: Int, amount: BigDecimal, currency: String, authToken: String): Future[AccountCredit]
+  def addCredit(userId: Int, amount: BigDecimal, currency: String)(authToken: String): Future[AccountCredit]
 }
 
 class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
@@ -34,7 +34,7 @@ class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
 
   private val serviceUrl = cfg.url.toString
 
-  override def addCredit(userId: Int, amount: BigDecimal, currency: String, authToken: String): Future[AccountCredit] = {
+  override def addCredit(userId: Int, amount: BigDecimal, currency: String)(authToken: String): Future[AccountCredit] = {
 
     val credit = AccountCreditReq(amount, currency, "customer") // TODO: use more specific reason
     call(Post(s"$serviceUrl/admin/users/$userId/credit", credit), okPF, Some(authToken))

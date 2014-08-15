@@ -16,7 +16,7 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
  * The main entry point of the credit offer service.
  */
 object CreditOfferService extends App with Configuration with StrictLogging with Loggers
-with DefaultDatabaseComponent with DefaultRepositoriesComponent {
+  with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
   logger.info(s"Starting Credit Offer service with config: $config")
 
@@ -25,23 +25,32 @@ with DefaultDatabaseComponent with DefaultRepositoriesComponent {
   val rabbitMqConfig = RabbitMqConfig(config)
   val consumerConnection = RabbitMq.reliableConnection(RabbitMqConfig(config))
   val publisherConnection = RabbitMq.recoveredConnection(RabbitMqConfig(config))
+
   // Initialise the actor system.
   implicit val system = ActorSystem("credit-offer-service")
   implicit val ec = system.dispatcher
   implicit val requestTimeout = Timeout(appConfig.requestTimeout)
+
   // Connect to DB.
   val offerDao = new DefaultOfferHistoryService[DefaultDatabaseTypes](db, promotionRepository, appConfig.creditAmount, appConfig.creditLimit)
-  // Create actors that handle email messages.
-  val exactTargetPublisher = publisher(appConfig.exactTargetOutput, "exact-target-publisher")
+
   val reportingPublisher = publisher(appConfig.reportingOutput, "reporting-publisher")
 
   logger.debug("Initialising actors")
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
 
-  val eventSender = new CompoundEventSender(Seq(new ReportingEventSender(reportingPublisher))) // TODO: Add email sender.
+  val mailEventSender = if (appConfig.useExactTarget) {
+    val exactTargetPublisher = publisher(appConfig.exactTarget.output, "exact-target-publisher")
+    new EmailEventSender(exactTargetPublisher, appConfig.exactTarget.templateName)
+  } else {
+    val mailerPublisher = publisher(appConfig.mailer.output, "mailer-publisher")
+    new MailerEventSender(mailerPublisher, appConfig.mailer.templateName, appConfig.mailer.routingId)
+  }
+
+  val eventSender = new CompoundEventSender(new ReportingEventSender(reportingPublisher)) // TODO: Add email sender.
   val adminAccountCreditService = AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config))
   val authService = AuthServiceClient(AuthServiceClientConfig(config))
-  
+
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, adminAccountCreditService, authService, eventSender,
       deviceRegErrorHandler, appConfig.retryTime)), name = "device-registration-event-handler")

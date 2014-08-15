@@ -1,6 +1,7 @@
 package com.blinkbox.books.creditoffer
 
 import akka.actor.ActorRef
+import com.blinkbox.books.clients.UnauthorizedException
 import com.blinkbox.books.messaging.ErrorHandler
 import com.blinkbox.books.messaging.Event
 import com.blinkbox.books.messaging.ReliableEventHandler
@@ -23,21 +24,30 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService, adminAccountCredi
                                 mailEventOutput: ActorRef, reportingEventOutput: ActorRef, errorHandler: ErrorHandler,
                                 retryInterval: FiniteDuration) extends ReliableEventHandler(errorHandler, retryInterval) with Logging {
 
+  import ZuulTokenProvider._
+
+  val tokenProvider = new DummyProvider
 
   override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] =
     for (
       deviceRegistration <- Future(DeviceRegistrationEvent.fromXML(event.body.content)) if isHudl2(deviceRegistration);
       userId = deviceRegistration.userId;
-      userProfile <- authService.userProfile(userId);
+      userProfile <- withAuthRetry(tokenProvider, authService.userProfile(userId));
       granted = offerDao.isGranted(userId, "HUDL2");
       _ = offerDao.grant(userId, "HUDL2") if !granted;
-      accountCredit = adminAccountCreditService.addCredit(userId, BigDecimal("10.0"), "GBP", "token");
+      accountCredit = withAuthRetry(tokenProvider, adminAccountCreditService.addCredit(userId, BigDecimal("10.0"), "GBP"));
       _ = sendMessages(userProfile, BigDecimal("10.0"), "GBP", "HUDL2")
-    ) yield()
+    ) yield ()
+
 
   override def isTemporaryFailure(e: Throwable): Boolean = true
 
   def isHudl2(event: DeviceRegistrationEvent): Boolean = ???
   def sendMessages(userDetails: UserProfile, credited: BigDecimal, currency: String, offer: String) = ???
+}
 
+
+class DummyProvider extends TokenProvider {
+  override def accessToken: Future[AccessToken] = ???
+  override def refreshedAccessToken: Future[AccessToken] = ???
 }

@@ -25,7 +25,7 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
   test("add credit to user account") {
     val client = new AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config)) with OkSendReceiveMock
 
-    whenReady(client.addCredit(123, BigDecimal("10.0"), "GBP", "someaccesstoken")) { result =>
+    whenReady(client.addCredit(123, BigDecimal("10.0"), "GBP")("someaccesstoken")) { result =>
       assert(result == AccountCredit(BigDecimal("10.0"), "GBP"))
     }
   }

@@ -19,10 +19,12 @@ case class AppConfig(
   requestTimeout: FiniteDuration,
   accountCreditService: URL,
   input: RabbitMqConsumer.QueueConfiguration,
-  exactTargetOutput: PublisherConfiguration,
+  exactTarget: ExactTargetConfig,
+  mailer: MailerConfig,
   reportingOutput: PublisherConfiguration,
   error: PublisherConfiguration,
-  db: DbConfig)
+  db: DbConfig,
+  useExactTarget: Boolean)
 
 case class DbConfig(
   url: URI,
@@ -31,6 +33,9 @@ case class DbConfig(
 
 case class AdminAccountCreditClientConfig(url: URL, timeout: FiniteDuration)
 case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration, username: String, password: String)
+
+case class MailerConfig(output: PublisherConfiguration, templateName: String, routingId: String)
+case class ExactTargetConfig(output: PublisherConfiguration, templateName: String)
 
 object AppConfig {
   def apply(config: Config): AppConfig = {
@@ -41,11 +46,13 @@ object AppConfig {
       serviceConfig.getDuration("retryTime", TimeUnit.MILLISECONDS).millis,
       serviceConfig.getDuration("requestTimeout", TimeUnit.MILLISECONDS).millis,
       serviceConfig.getUrl("accountCreditService.url"),
-      RabbitMqConsumer.QueueConfiguration(serviceConfig.getConfig("registrationListener.input")),
-      RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("registrationListener.exactTargetOutput")),
-      RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("registrationListener.reportingOutput")),
-      RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("registrationListener.error")),
-      DbConfig(serviceConfig.getConfig("db")))
+      RabbitMqConsumer.QueueConfiguration(serviceConfig.getConfig("input")),
+      ExactTargetConfig(serviceConfig.getConfig("exactTarget")),
+      MailerConfig(serviceConfig.getConfig("mailer")),
+      RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("reportingOutput")),
+      RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("error")),
+      DbConfig(serviceConfig.getConfig("db")),
+      serviceConfig.getBoolean("useExactTarget"))
   }
 }
 
@@ -60,8 +67,7 @@ object DbConfig {
 object AdminAccountCreditClientConfig {
   def apply(config: Config): AdminAccountCreditClientConfig = AdminAccountCreditClientConfig(
     config.getHttpUrl("service.adminaccountcredit.api.admin.internalUrl"),
-    config.getDuration("service.adminaccountcredit.api.admin.timeout", TimeUnit.MILLISECONDS).millis
-  )
+    config.getDuration("service.adminaccountcredit.api.admin.timeout", TimeUnit.MILLISECONDS).millis)
 }
 
 object AuthServiceClientConfig {
@@ -69,6 +75,16 @@ object AuthServiceClientConfig {
     config.getHttpUrl("service.auth.api.public.internalUrl"),
     config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis,
     config.getString("service.auth.api.public.username"),
-    config.getString("service.auth.api.public.password")
-  )
+    config.getString("service.auth.api.public.password"))
+}
+
+object ExactTargetConfig {
+  def apply(config: Config): ExactTargetConfig = ExactTargetConfig(
+    PublisherConfiguration(config.getConfig("output")), config.getString("templateName"))
+}
+
+object MailerConfig {
+  def apply(config: Config): MailerConfig = MailerConfig(
+    PublisherConfiguration(config.getConfig("output")),
+    config.getString("templateName"), config.getString("routingId"))
 }

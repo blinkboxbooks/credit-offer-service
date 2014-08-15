@@ -4,22 +4,24 @@ import akka.actor.ActorSystem
 import akka.testkit.{ TestKit, TestProbe, ImplicitSender }
 import akka.util.Timeout
 import com.blinkbox.books.messaging.Event
-import com.blinkbox.books.schemas.events.user.v2
 import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.UserId
+import org.joda.money.Money
+import org.joda.money.CurrencyUnit
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.FlatSpec
+import org.scalatest.StreamlinedXmlEquality
 import org.scalatest.mock.MockitoSugar
 import scala.concurrent.duration._
-import org.joda.money.Money
-import org.joda.money.CurrencyUnit
+import scala.xml._
 
 class EventSendersTest extends FlatSpec with MockitoSugar {
 
   val offer = "test-offer"
   val user = User(UserId(42), "bob@blinkbox.com", "Bob", "Builder")
-  val creditAmount = Money.of(CurrencyUnit.GBP, BigDecimal(3.99).bigDecimal)
+  val creditedValue = BigDecimal(4.20)
+  val creditAmount = Money.of(CurrencyUnit.GBP, creditedValue.bigDecimal)
 
   trait SenderFixture {
     val eventSender1 = mock[EventSender]
@@ -28,18 +30,18 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
     val eventSenders = Seq(eventSender1, eventSender2, eventSender3)
   }
 
-  class PublisherFixture extends TestKit(ActorSystem("test-system")) with ImplicitSender {
+  class PublisherFixture extends TestKit(ActorSystem("test-system")) with ImplicitSender with StreamlinedXmlEquality {
     implicit val ec = system.dispatcher
     implicit val timeout = Timeout(5.seconds)
     val publisher = TestProbe()
   }
 
   "A compound sender" should "do nothing when empty" in new SenderFixture {
-    new CompoundEventSender(Nil).sendEvent(user, creditAmount, offer)
+    new CompoundEventSender().sendEvent(user, creditAmount, offer)
   }
 
   it should "pass on event to all delegates" in new SenderFixture {
-    new CompoundEventSender(eventSenders).sendEvent(user, creditAmount, offer)
+    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, offer)
     eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, offer))
   }
 
@@ -47,7 +49,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
     val ex = new RuntimeException("Test exception")
     doThrow(ex).when(eventSender2).sendEvent(any[User], any[Money], anyString)
 
-    new CompoundEventSender(eventSenders).sendEvent(user, creditAmount, offer)
+    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, offer)
 
     eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, offer))
   }
@@ -64,8 +66,55 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
     val (_, eventUser, eventAmount, eventCurrency, eventReason) = published.body match {
       case User.Credited(timestamp, user, amount, currency, reason) => (timestamp, user, amount, currency, reason)
     }
-    assert(eventUser == user && eventAmount == BigDecimal(creditAmount.getAmount) && 
-        eventCurrency == creditAmount.getCurrencyUnit.getCurrencyCode && eventReason == offer)
+    assert(eventUser == user && eventAmount == BigDecimal(creditAmount.getAmount) &&
+      eventCurrency == creditAmount.getCurrencyUnit.getCurrencyCode && eventReason == offer)
   }
+
+  "An Exact Target event sender" should "publish 'send email' events on its output" in new PublisherFixture {
+    val testTemplate = "test_template"
+    val sender = new EmailEventSender(publisher.ref, testTemplate)
+    sender.sendEvent(user, creditAmount, offer)
+
+    val published = publisher.expectMsgType[Event](3.seconds)
+
+    published.body match {
+      case Email.Send(timestamp, recipient, templateName, attributes) =>
+        (timestamp, recipient, templateName, attributes)
+        assert(recipient.emailAddress == user.username &&
+          templateName == testTemplate)
+        assert(attributes == Map("name" -> recipient.emailAddress, "amount" -> creditAmount.getAmount.toString))
+    }
+  }
+
+  "A Mailer event sender" should "publish events in the old Mailer XML format on its output" in new PublisherFixture {
+    val sender = new MailerEventSender(publisher.ref, "test_template", "test instance")
+    sender.sendEvent(user, creditAmount, offer)
+
+    val published = publisher.expectMsgType[Event](3.seconds)
+
+    val xml = XML.loadString(published.body.asString)
+    assert(xml === expectedXml, "Should produce the expected XML")
+  }
+
+  private val expectedXml =
+    <sendEmail r:messageId={ "user-42-credited-test-offer" } r:instance="test instance" r:originator="bookStore" xmlns="http://schemas.blinkbox.com/books/emails/sending/v1" xmlns:r="http://schemas.blinkbox.com/books/routing/v1">
+      <template>test_template</template>
+      <to>
+        <recipient>
+          <name>Bob</name>
+          <email>bob@blinkbox.com</email>
+        </recipient>
+      </to>
+      <templateVariables>
+        <templateVariable>
+          <key>salutation</key>
+          <value>Bob</value>
+        </templateVariable>
+        <templateVariable>
+          <key>amountCredited</key>
+          <value>4.20</value>
+        </templateVariable>
+      </templateVariables>
+    </sendEmail>
 
 }

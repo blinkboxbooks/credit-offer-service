@@ -4,10 +4,13 @@ import com.blinkbox.books.creditoffer.persistence.cake.{TestDatabaseTypes, TestR
 import com.blinkbox.books.creditoffer.persistence.models._
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, BeforeAndAfter, FlatSpec}
 
 import scala.slick.jdbc.meta.MTable._
 
+@RunWith(classOf[JUnitRunner])
 class OfferHistoryServiceTest extends FlatSpec with BeforeAndAfter with Matchers
 with TestDatabaseComponent with TestRepositoriesComponent {
 

@@ -26,24 +26,34 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   eventSender: EventSender, errorHandler: ErrorHandler, retryInterval: FiniteDuration)
   extends ReliableEventHandler(errorHandler, retryInterval) with StrictLogging {
 
+  import ZuulTokenProvider._
+
+  val tokenProvider = new DummyProvider
+
   val offerCode = "hudl2credit"
 
   override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] =
     for (
       deviceRegistration <- Future(DeviceRegistrationEvent.fromXML(event.body.content)) if isHudl2(deviceRegistration);
       userId = deviceRegistration.userId;
-      userProfile <- authService.userProfile(userId);
+      userProfile <- withAuthRetry(tokenProvider, authService.userProfile(userId));
       grantedOptional <- Future(offerDao.grant(userId, offerCode));
       Some(granted) = grantedOptional if grantedOptional.isDefined;
       credited = granted.creditedAmount;
-      accountCredit = adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode, "token");
+      accountCredit = withAuthRetry(tokenProvider, adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode));
       _ = sendMessages(userProfile, credited, offerCode)
     ) yield ()
 
   override def isTemporaryFailure(e: Throwable): Boolean = ???
 
   def isHudl2(event: DeviceRegistrationEvent): Boolean = ???
-  def sendMessages(userProfile: UserProfile, creditAmount: Money, offer: String) =
-    eventSender.sendEvent(User(UserId(42), userProfile.email, "TODO: First Name", "Last Name"), creditAmount, offer)
 
+  def sendMessages(userProfile: UserProfile, creditAmount: Money, offer: String) =
+    eventSender.sendEvent(User(UserId(42), userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), creditAmount, offer)
+}
+
+
+class DummyProvider extends TokenProvider {
+  override def accessToken: Future[AccessToken] = ???
+  override def refreshedAccessToken: Future[AccessToken] = ???
 }

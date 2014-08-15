@@ -40,7 +40,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
       grantedOptional <- Future(offerDao.grant(userId, offerCode));
       Some(granted) = grantedOptional if grantedOptional.isDefined;
       credited = granted.creditedAmount;
-      accountCredit = withAuthRetry(tokenProvider, adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode, "token"));
+      accountCredit = withAuthRetry(tokenProvider, adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode));
       _ = sendMessages(userProfile, credited, offerCode)
     ) yield ()
 

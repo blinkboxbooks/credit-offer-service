@@ -34,7 +34,7 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 
   override def sendEvent(user: User, creditedAmount: Money, offer: String) = {
     val content = buildEmailContent(user, creditedAmount, offer)
-    delegate ? Event.xml(content, EventHeader(EventSender.Originator))
+    delegate ! Event.xml(content, EventHeader(EventSender.Originator))
   }
 
   /** Generate output message in the old Mailer format. */

@@ -71,7 +71,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
   }
 
   "An Exact Target event sender" should "publish 'send email' events on its output" in new PublisherFixture {
-    val testTemplate = "test template"
+    val testTemplate = "test_template"
     val sender = new EmailEventSender(publisher.ref, testTemplate)
     sender.sendEvent(user, creditAmount, offer)
 
@@ -87,7 +87,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
   }
 
   "A Mailer event sender" should "publish events in the old Mailer XML format on its output" in new PublisherFixture {
-    val sender = new MailerEventSender(publisher.ref, "test template", "test instance")
+    val sender = new MailerEventSender(publisher.ref, "test_template", "test instance")
     sender.sendEvent(user, creditAmount, offer)
 
     val published = publisher.expectMsgType[Event](3.seconds)
@@ -98,7 +98,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
 
   private val expectedXml =
     <sendEmail r:messageId={ "user-42-credited-test-offer" } r:instance="test instance" r:originator="bookStore" xmlns="http://schemas.blinkbox.com/books/emails/sending/v1" xmlns:r="http://schemas.blinkbox.com/books/routing/v1">
-      <template>test template</template>
+      <template>test_template</template>
       <to>
         <recipient>
           <name>Bob</name>

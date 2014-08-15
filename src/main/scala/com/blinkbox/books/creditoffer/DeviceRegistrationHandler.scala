@@ -49,7 +49,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   def isHudl2(event: DeviceRegistrationEvent): Boolean = ???
 
   def sendMessages(userProfile: UserProfile, creditAmount: Money, offer: String) =
-    eventSender.sendEvent(User(UserId(42), userProfile.email, "TODO: First Name", "Last Name"), creditAmount, offer)
+    eventSender.sendEvent(User(UserId(42), userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), creditAmount, offer)
 }
 
 

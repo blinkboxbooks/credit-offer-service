@@ -63,7 +63,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
     val client = new AuthServiceClient(AuthServiceClientConfig(config)) with UserProfileSendReceiveMock
 
     whenReady(client.userProfile(1926)("someToken")) { result =>
-      assert(result == UserProfile("credit-offer-service@blinkbox.com"))
+      assert(result == UserProfile("credit-offer-service@blinkbox.com", "credit-offer", "service"))
     }
   }
 }

@@ -21,7 +21,7 @@ trait AuthService {
 }
 
 case class AuthTokens(access_token: String, refresh_token: String)
-case class UserProfile(user_username: String)
+case class UserProfile(user_username: String, user_first_name: String, user_last_name: String)
 
 class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
   with ClientPlumbing with StrictLogging with Json4sJacksonSupport {

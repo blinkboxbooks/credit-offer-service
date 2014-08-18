@@ -12,8 +12,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.time.{Seconds, Span, Millis}
 import spray.http._
-
 import scala.concurrent.{Future, ExecutionContext}
+import org.joda.money.Money
+import org.joda.money.CurrencyUnit
 
 @RunWith(classOf[JUnitRunner])
 class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Configuration {
@@ -25,8 +26,9 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
   test("add credit to user account") {
     val client = new AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config)) with OkSendReceiveMock
 
-    whenReady(client.addCredit(123, BigDecimal("10.0"), "GBP", "someaccesstoken")) { result =>
-      assert(result == AccountCredit(BigDecimal("10.0"), "GBP"))
+    val amount = Money.of(CurrencyUnit.GBP, BigDecimal("10.0").bigDecimal)
+    whenReady(client.addCredit(123, amount, "someaccesstoken")) { result =>
+      assert(result == AccountCredit(amount))
     }
   }
 }

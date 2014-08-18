@@ -45,7 +45,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
         userProfile <- userService.userProfile(userId);
         granted <- Future(offerDao.grant(userId, offerCode));
         creditedOption <- optionallyCredit(userId, granted);
-        creditedAmountOption = creditedOption.map(c => Money.of(CurrencyUnit.of(c.currency), c.amount.bigDecimal)); // TODO: Make client APIs return Money instead.
+        creditedAmountOption = creditedOption.map(_.asMoney);
         _ = sendIfCredited(creditedAmountOption, UserId(userId), userProfile, offerCode)
       ) yield ()
   }
@@ -59,9 +59,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   private def isHudl2(device: DeviceDetails): Boolean = device.brand == Hudl2Brand && device.model == Hudl2Model
 
   private def optionallyCredit(userId: Int, granted: Option[GrantedOffer]): Future[Option[AccountCredit]] = granted match {
-    case Some(grant) =>
-      accountCreditService.addCredit(userId, grant.creditedAmount.getAmount, grant.creditedAmount.getCurrencyUnit.getCode)
-        .map(res => Some(res))
+    case Some(grant) => accountCreditService.addCredit(userId, grant.creditedAmount).map(res => Some(res))
     case None => Future.successful(None)
   }
 

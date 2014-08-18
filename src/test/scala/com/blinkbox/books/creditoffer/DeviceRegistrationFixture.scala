@@ -24,8 +24,9 @@ trait DeviceRegistrationFixture {
   def grantedOffer(userId: Int) = GrantedOffer(userId, DeviceRegistrationHandler.offerCode, offerAmount, offerTimestamp)
 
   def deviceRegistrationEvent(userId: Int, deviceMatchesOffer: Boolean) = {
-    // TODO: Replace this with a constant on the impl with the real Hudl 2 device string.
-    val (model, brand) = if (deviceMatchesOffer) ("Hudl 2", "Hudl") else ("Generic Tablet", "OEM")
+    val (brand, model) =
+      if (deviceMatchesOffer) (DeviceRegistrationHandler.Hudl2Brand, DeviceRegistrationHandler.Hudl2Model)
+      else ("OEM", "Generic Tablet")
     val content =
       <registered xmlns="http://schemas.blinkboxbooks.com/events/clients/v1" xmlns:r="http://schemas.blinkboxbooks.com/messaging/routing/v1" xmlns:v="http://schemas.blinkboxbooks.com/messaging/versioning" r:originator="zuul" v:version="1.0">
         <userId>{ userId }</userId>

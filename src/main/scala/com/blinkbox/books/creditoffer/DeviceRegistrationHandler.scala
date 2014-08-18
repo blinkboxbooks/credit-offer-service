@@ -1,8 +1,8 @@
 package com.blinkbox.books.creditoffer
 
 import akka.actor.ActorRef
-import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditService
-import com.blinkbox.books.clients.authservice.{ UserProfile, AuthService }
+import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
+import com.blinkbox.books.clients.authservice.{UserService, UserProfile}
 import com.blinkbox.books.messaging._
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import scala.concurrent.Future
@@ -22,13 +22,9 @@ import com.blinkbox.books.schemas.events.user.v2.UserId
  *   Credit the user, update their tracked state, send a message for reporting, and send a message for a confirmation email.
  */
 class DeviceRegistrationHandler(offerDao: OfferHistoryService,
-  adminAccountCreditService: AdminAccountCreditService, authService: AuthService,
+  adminAccountCreditService: AccountCreditService, userService: UserService,
   eventSender: EventSender, errorHandler: ErrorHandler, retryInterval: FiniteDuration)
   extends ReliableEventHandler(errorHandler, retryInterval) with StrictLogging {
-
-  import ZuulTokenProvider._
-
-  val tokenProvider = new DummyProvider
 
   val offerCode = "hudl2credit"
 
@@ -36,11 +32,11 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     for (
       deviceRegistration <- Future(DeviceRegistrationEvent.fromXML(event.body.content)) if isHudl2(deviceRegistration);
       userId = deviceRegistration.userId;
-      userProfile <- withAuthRetry(tokenProvider, authService.userProfile(userId));
+      userProfile <- userService.userProfile(userId);
       grantedOptional <- Future(offerDao.grant(userId, offerCode));
       Some(granted) = grantedOptional if grantedOptional.isDefined;
       credited = granted.creditedAmount;
-      accountCredit = withAuthRetry(tokenProvider, adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode));
+      accountCredit = adminAccountCreditService.addCredit(userId, credited.getAmount, credited.getCurrencyUnit.getCode);
       _ = sendMessages(userProfile, credited, offerCode)
     ) yield ()
 
@@ -50,10 +46,4 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
 
   def sendMessages(userProfile: UserProfile, creditAmount: Money, offer: String) =
     eventSender.sendEvent(User(UserId(42), userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), creditAmount, offer)
-}
-
-
-class DummyProvider extends TokenProvider {
-  override def accessToken: Future[AccessToken] = ???
-  override def refreshedAccessToken: Future[AccessToken] = ???
 }

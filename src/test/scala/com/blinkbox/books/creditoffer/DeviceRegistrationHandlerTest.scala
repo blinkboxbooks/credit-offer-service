@@ -2,8 +2,8 @@ package com.blinkbox.books.creditoffer
 
 import akka.actor.{ActorRef,ActorSystem,Props}
 import akka.testkit.{ImplicitSender,TestKit}
-import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditService
-import com.blinkbox.books.clients.authservice.AuthService
+import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
+import com.blinkbox.books.clients.authservice.UserService
 import com.blinkbox.books.messaging._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -21,8 +21,8 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
   val retryInterval = 5.seconds
   
   private var offerDao: OfferHistoryService = _
-  private var accountCreditService: AdminAccountCreditService = _
-  private var authService: AuthService = _
+  private var accountCreditService: AccountCreditService = _
+  private var authService: UserService = _
   private var errorHandler: ErrorHandler = _
   private var eventSender: EventSender = _
 
@@ -82,5 +82,4 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
   ignore("Temporary failure when adding credit to user") {
     fail("TODO")
   }
-
 }

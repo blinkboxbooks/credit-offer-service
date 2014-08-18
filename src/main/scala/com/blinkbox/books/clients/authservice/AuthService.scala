@@ -3,7 +3,7 @@ package com.blinkbox.books.clients.authservice
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.blinkbox.books.clients.{SendAndReceive, ClientPlumbing}
-import com.blinkbox.books.creditoffer.AuthServiceClientConfig
+import com.blinkbox.books.creditoffer.{AuthRetry, TokenProvider, AuthServiceClientConfig}
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.json4s.{DefaultFormats, Formats}
 import spray.http.{FormData, HttpResponse}
@@ -17,7 +17,11 @@ import scala.concurrent.Future
 trait AuthService {
   def authenticate(userName: String, password: String): Future[AuthTokens]
   def authenticate(refreshToken: String): Future[AuthTokens]
-  def userProfile(userId: Int)(authToken: String): Future[UserProfile]
+  def userProfile(userId: Int, authToken: String): Future[UserProfile]
+}
+
+trait UserService {
+  def userProfile(userId: Int): Future[UserProfile]
 }
 
 case class AuthTokens(access_token: String, refresh_token: String)
@@ -44,7 +48,7 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
   }
 
 
-  override def userProfile(userId: Int)(authToken: String): Future[UserProfile] = {
+  override def userProfile(userId: Int, authToken: String): Future[UserProfile] = {
     call(Get(s"${cfg.url}/admin/users/$userId"), userProfileResponseHandler, Some(authToken))
   }
 
@@ -60,6 +64,20 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
 
 object AuthServiceClient {
   def apply(cfg: AuthServiceClientConfig) = new AuthServiceClient(cfg) with SendAndReceive
+}
+
+class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: AuthServiceClientConfig)
+  extends AuthServiceClient(cfg) with UserService with AuthRetry {
+  this: SendAndReceive =>
+
+  import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
+
+  override def userProfile(userId: Int): Future[UserProfile] = withAuthRetry(super.userProfile(userId, _))
+}
+
+object RetryingUserServiceClient {
+  def apply(tokenProvider: TokenProvider, cfg: AuthServiceClientConfig) =
+    new RetryingUserServiceClient(tokenProvider, cfg) with SendAndReceive
 }
 
 case class ThrottledException(message: String, cause: Throwable = null) extends Exception(message, cause)

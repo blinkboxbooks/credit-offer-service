@@ -39,16 +39,7 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   logger.debug("Initialising actors")
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
 
-  val mailEventSender = if (appConfig.useExactTarget) {
-    val exactTargetPublisher = publisher(appConfig.exactTarget.output, "exact-target-publisher")
-    new EmailEventSender(exactTargetPublisher, appConfig.exactTarget.templateName)
-  } else {
-    val mailerPublisher = publisher(appConfig.mailer.output, "mailer-publisher")
-    new MailerEventSender(mailerPublisher, appConfig.mailer.templateName, appConfig.mailer.routingId)
-  }
-
-  val eventSender = new CompoundEventSender(new ReportingEventSender(reportingPublisher)) // TODO: Add email sender.
-
+  val eventSender = buildEventSender(appConfig.useExactTarget)
   val authClient = AuthServiceClient(AuthServiceClientConfig(config))
   val tokenProviderActor = system.actorOf(Props(classOf[ZuulTokenProviderActor], appConfig.account, authClient),
     name = "zuul-token-provider-actor")
@@ -62,6 +53,17 @@ object CreditOfferService extends App with Configuration with StrictLogging with
       deviceRegErrorHandler, appConfig.retryTime)), name = "device-registration-event-handler")
 
   override def dbSettings = appConfig.db
+
+  private[creditoffer] def buildEventSender(userExactTarget: Boolean) = {
+    val mailEventSender = if (appConfig.useExactTarget) {
+      val exactTargetPublisher = publisher(appConfig.exactTarget.output, "exact-target-publisher")
+      new EmailEventSender(exactTargetPublisher, appConfig.exactTarget.templateName)
+    } else {
+      val mailerPublisher = publisher(appConfig.mailer.output, "mailer-publisher")
+      new MailerEventSender(mailerPublisher, appConfig.mailer.templateName, appConfig.mailer.routingId)
+    }
+    new CompoundEventSender(new ReportingEventSender(reportingPublisher), mailEventSender)
+  }
 
   private def publisher(config: PublisherConfiguration, actorName: String) =
     system.actorOf(Props(new RabbitMqConfirmedPublisher(publisherConnection, config)), name = actorName)

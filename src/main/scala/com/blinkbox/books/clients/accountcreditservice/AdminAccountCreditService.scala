@@ -3,7 +3,7 @@ package com.blinkbox.books.clients.accountcreditservice
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.blinkbox.books.clients.{SendAndReceive, ClientPlumbing}
-import com.blinkbox.books.creditoffer.AdminAccountCreditClientConfig
+import com.blinkbox.books.creditoffer.{AuthRetry, TokenProvider, AdminAccountCreditClientConfig}
 import com.blinkbox.books.spray.JsonFormats._
 import com.blinkbox.books.spray.v1.Version1JsonSupport
 import com.typesafe.scalalogging.slf4j.StrictLogging
@@ -19,7 +19,11 @@ case class AccountCredit(amount: BigDecimal, currency: String)
 case class AccountCreditReq(amount: BigDecimal, currency: String, reason: String)
 
 trait AdminAccountCreditService {
-  def addCredit(userId: Int, amount: BigDecimal, currency: String)(authToken: String): Future[AccountCredit]
+  def addCredit(userId: Int, amount: BigDecimal, currency: String, authToken: String): Future[AccountCredit]
+}
+
+trait AccountCreditService {
+  def addCredit(userId: Int, amount: BigDecimal, currency: String): Future[AccountCredit]
 }
 
 class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
@@ -34,12 +38,11 @@ class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
 
   private val serviceUrl = cfg.url.toString
 
-  override def addCredit(userId: Int, amount: BigDecimal, currency: String)(authToken: String): Future[AccountCredit] = {
+  override def addCredit(userId: Int, amount: BigDecimal, currency: String, authToken: String): Future[AccountCredit] = {
 
     val credit = AccountCreditReq(amount, currency, "customer") // TODO: use more specific reason
     call(Post(s"$serviceUrl/admin/users/$userId/credit", credit), okPF, Some(authToken))
   }
-
 
   private val unmarshalResponse: HttpEntity => AccountCredit = unmarshal(version1JsonUnmarshaller[AccountCredit])
 
@@ -62,4 +65,19 @@ object AdminAccountCreditServiceClient {
   }, {
     case d: BigDecimal => JString(d.toString())
   }))
+}
+
+class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvider, cfg: AdminAccountCreditClientConfig)
+  extends AdminAccountCreditServiceClient(cfg) with AccountCreditService with AuthRetry {
+  this: SendAndReceive =>
+
+  import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
+
+  def addCredit(userId: Int, amount: BigDecimal, currency: String): Future[AccountCredit] =
+    withAuthRetry(super.addCredit(userId, amount, currency, _))
+}
+
+object RetryingAdminAccountCreditServiceClient {
+  def apply(tokenProvider: TokenProvider, cfg: AdminAccountCreditClientConfig) =
+    new RetryingAccountCreditServiceClient(tokenProvider, cfg) with SendAndReceive
 }

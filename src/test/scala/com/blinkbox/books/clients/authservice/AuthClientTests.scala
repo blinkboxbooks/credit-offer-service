@@ -15,12 +15,10 @@ import spray.http.ContentTypes.`application/json`
 import spray.http._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Promise, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-import com.blinkbox.books.creditoffer.TokenProvider
-import com.blinkbox.books.creditoffer.ZuulTokenProvider.withAuthRetry
 
 @RunWith(classOf[JUnitRunner])
 class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions with Configuration with MockitoSugar {
@@ -62,7 +60,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   test("Get user profile") {
     val client = new AuthServiceClient(AuthServiceClientConfig(config)) with UserProfileSendReceiveMock
 
-    whenReady(client.userProfile(1926)("someToken")) { result =>
+    whenReady(client.userProfile(1926, "someToken")) { result =>
       assert(result == UserProfile("credit-offer-service@blinkbox.com", "credit-offer", "service"))
     }
   }

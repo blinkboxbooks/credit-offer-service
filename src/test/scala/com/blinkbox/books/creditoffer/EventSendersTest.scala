@@ -8,6 +8,7 @@ import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.UserId
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit
+import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.FlatSpec
@@ -22,6 +23,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
   val user = User(UserId(42), "bob@blinkbox.com", "Bob", "Builder")
   val creditedValue = BigDecimal(4.20)
   val creditAmount = Money.of(CurrencyUnit.GBP, creditedValue.bigDecimal)
+  val timestamp = DateTime.now
 
   trait SenderFixture {
     val eventSender1 = mock[EventSender]
@@ -37,27 +39,27 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
   }
 
   "A compound sender" should "do nothing when empty" in new SenderFixture {
-    new CompoundEventSender().sendEvent(user, creditAmount, offer)
+    new CompoundEventSender().sendEvent(user, creditAmount, timestamp, offer)
   }
 
   it should "pass on event to all delegates" in new SenderFixture {
-    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, offer)
-    eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, offer))
+    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, timestamp, offer)
+    eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, timestamp, offer))
   }
 
   it should "pass on event to all other delegates when one fails" in new SenderFixture {
     val ex = new RuntimeException("Test exception")
-    doThrow(ex).when(eventSender2).sendEvent(any[User], any[Money], anyString)
+    doThrow(ex).when(eventSender2).sendEvent(any[User], any[Money], any[DateTime], anyString)
 
-    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, offer)
+    new CompoundEventSender(eventSenders: _*).sendEvent(user, creditAmount, timestamp, offer)
 
-    eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, offer))
+    eventSenders.foreach(sender => verify(sender).sendEvent(user, creditAmount, timestamp, offer))
   }
 
   "A reporting event sender" should "publish 'user credit' events on its output" in new PublisherFixture {
     // Send a message.
     val sender = new ReportingEventSender(publisher.ref)
-    sender.sendEvent(user, creditAmount, offer)
+    sender.sendEvent(user, creditAmount, timestamp, offer)
 
     // Wait for the output.
     val published = publisher.expectMsgType[Event](3.seconds)
@@ -73,7 +75,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
   "An Exact Target event sender" should "publish 'send email' events on its output" in new PublisherFixture {
     val testTemplate = "test_template"
     val sender = new EmailEventSender(publisher.ref, testTemplate)
-    sender.sendEvent(user, creditAmount, offer)
+    sender.sendEvent(user, creditAmount, timestamp, offer)
 
     val published = publisher.expectMsgType[Event](3.seconds)
 
@@ -88,7 +90,7 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
 
   "A Mailer event sender" should "publish events in the old Mailer XML format on its output" in new PublisherFixture {
     val sender = new MailerEventSender(publisher.ref, "test_template", "test instance")
-    sender.sendEvent(user, creditAmount, offer)
+    sender.sendEvent(user, creditAmount, timestamp, offer)
 
     val published = publisher.expectMsgType[Event](3.seconds)
 

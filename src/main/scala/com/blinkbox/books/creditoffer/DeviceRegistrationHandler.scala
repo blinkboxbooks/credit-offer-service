@@ -43,10 +43,10 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     else
       for (
         userProfile <- userService.userProfile(userId);
-        granted <- Future(offerDao.grant(userId, offerCode));
-        creditedOption <- optionallyCredit(userId, granted);
+        grantedOption <- Future(offerDao.grant(userId, offerCode));
+        creditedOption <- optionallyCredit(userId, grantedOption);
         creditedAmountOption = creditedOption.map(_.asMoney);
-        _ = sendIfCredited(creditedAmountOption, UserId(userId), userProfile, offerCode)
+        _ = sendIfCredited(creditedAmountOption, grantedOption, UserId(userId), userProfile, offerCode)
       ) yield ()
   }
 
@@ -63,10 +63,12 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     case None => Future.successful(None)
   }
 
-  private def sendIfCredited(creditAmount: Option[Money], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] = creditAmount match {
-    case Some(amount) => Future(eventSender.sendEvent(User(userId, userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), amount, offer))
-    case None => Future.successful(None)
-  }
+  private def sendIfCredited(creditAmount: Option[Money], granted: Option[GrantedOffer], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] =
+    (creditAmount, granted) match {
+      case (Some(amount), Some(grant)) => Future(eventSender.sendEvent(
+        User(userId, userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), amount, grant.createdAt, offer))
+      case _ => Future.successful(None)
+    }
 
 }
 

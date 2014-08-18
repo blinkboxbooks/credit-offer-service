@@ -22,7 +22,7 @@ trait OfferHistoryService {
 
 }
 
-case class GrantedOffer(userId: Int, offerId: String, creditedAmount: Money,createdAt: DateTime)
+case class GrantedOffer(userId: Int, offerId: String, creditedAmount: Money, createdAt: DateTime)
 
 class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   db: DbTypes#Database,

@@ -83,8 +83,9 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
       case Email.Send(timestamp, recipient, templateName, attributes) =>
         (timestamp, recipient, templateName, attributes)
         assert(recipient.emailAddress == user.username &&
+          recipient.id == user.id.value.toString &&
           templateName == testTemplate)
-        assert(attributes == Map("name" -> recipient.emailAddress, "amount" -> creditAmount.getAmount.toString))
+        assert(attributes == Map("firstName" -> user.firstName, "lastName" -> user.lastName))
     }
   }
 

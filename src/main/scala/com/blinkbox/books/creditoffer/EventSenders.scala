@@ -71,7 +71,7 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
-    val attributes = Map("name" -> user.username, "amount" -> creditedAmount.getAmount.toString)
+    val attributes = Map("firstName" -> user.firstName, "lastName" -> user.lastName)
     val emailTrigger = Email.Send(timestamp, Email.User(user.username, user.id.value.toString), templateName, attributes)
     delegate ! Event.json(EventHeader(EventSender.Originator), emailTrigger)
   }

@@ -24,7 +24,8 @@ case class AppConfig(
   reportingOutput: PublisherConfiguration,
   error: PublisherConfiguration,
   db: DbConfig,
-  useExactTarget: Boolean)
+  useExactTarget: Boolean,
+  account: Account)
 
 case class DbConfig(
   url: URI,
@@ -52,7 +53,9 @@ object AppConfig {
       RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("reportingOutput")),
       RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("error")),
       DbConfig(serviceConfig.getConfig("db")),
-      serviceConfig.getBoolean("useExactTarget"))
+      serviceConfig.getBoolean("useExactTarget"),
+      Account(serviceConfig.getString("account.username"), serviceConfig.getString("account.password"))
+    )
   }
 }
 

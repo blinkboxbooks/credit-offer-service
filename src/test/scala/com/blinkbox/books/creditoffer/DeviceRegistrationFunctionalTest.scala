@@ -19,6 +19,8 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import scala.concurrent.duration._
 import akka.actor.Status.Success
+import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
+import com.blinkbox.books.clients.authservice.UserService
 
 @RunWith(classOf[JUnitRunner])
 class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter with MockitoSugar with StreamlinedXmlEquality
@@ -51,18 +53,18 @@ class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter 
     // A offer history service backed by an in-memory DB.
     val historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, creditLimit)
 
-    // TODO: An admin account credit service (backed by something that takes auth config and may fail).
-    val accountCreditService: AdminAccountCreditService = mock[AdminAccountCreditService]
+    // TODO: An account credit service (backed by something that takes auth config and may fail).
+    val accountCreditService = mock[AccountCreditService]
 
-    // TODO: A real auth service (backed by something that may fail).
-    val authService: AuthService = mock[AuthService]
+    // TODO: A real user service that sits on top of the auth service.
+    val userService = mock[UserService]
 
     val emailPublisher = TestProbe()
     val eventSender = CreditOfferService.buildEventSender(useExactTarget)
-    val errorHandler: ErrorHandler = mock[ErrorHandler]
+    val errorHandler = mock[ErrorHandler]
 
     val handler = system.actorOf(Props(
-      new DeviceRegistrationHandler(historyDao, accountCreditService, authService, eventSender, errorHandler, retryInterval)))
+      new DeviceRegistrationHandler(historyDao, accountCreditService, userService, eventSender, errorHandler, retryInterval)))
   }
 
   //
@@ -74,14 +76,22 @@ class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter 
     handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)
     expectMsgType[Status.Success]
 
+    // TODO: Check that user was given credit.
     fail("TODO")
   }
 
   it should "Should ignore Hudl 2 registration for user that has received the offer already" in new TestFixture {
+    handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)
+    expectMsgType[Status.Success]
+
+    handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)
+    expectMsgType[Status.Success]
+
+    // TODO: Check that user was only given credit once.
     fail("TODO")
   }
 
-  it should "ignore Hudl2 registratio for user after offer has hit the cap" in new TestFixture {
+  it should "ignore Hudl2 registration for user after offer has hit the cap" in new TestFixture {
     fail("TODO")
   }
 

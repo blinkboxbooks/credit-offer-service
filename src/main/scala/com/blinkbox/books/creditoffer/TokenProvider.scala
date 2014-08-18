@@ -4,12 +4,12 @@ import akka.actor.{ActorRef, Stash, Actor}
 import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
+import com.blinkbox.books.clients.UnauthorizedException
 import scala.concurrent.duration._
 
-import com.blinkbox.books.clients.UnauthorizedException
 import com.blinkbox.books.clients.authservice.{AuthTokens, AuthService}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait TokenProvider {
   def accessToken: Future[AccessToken]
@@ -71,11 +71,12 @@ class ZuulTokenProvider(providerActor: ActorRef) extends TokenProvider {
   override def refreshedAccessToken: Future[AccessToken] = (providerActor ? RefreshAccessToken).mapTo[AccessToken]
 }
 
-object ZuulTokenProvider {
-  import scala.concurrent.ExecutionContext.Implicits.global
+trait AuthRetry {
+
+  val tokenProvider: TokenProvider
 
   // TODO: Add tests for this
-  def withAuthRetry[T](tokenProvider: TokenProvider, f: (String) => Future[T]): Future[T] = {
+  def withAuthRetry[T](f: (String) => Future[T])(implicit ec: ExecutionContext): Future[T] = {
     tokenProvider.accessToken.flatMap(accessToken => f(accessToken.value)) recoverWith {
       case ex: UnauthorizedException => tokenProvider.refreshedAccessToken.flatMap(accessToken => f(accessToken.value))
     }

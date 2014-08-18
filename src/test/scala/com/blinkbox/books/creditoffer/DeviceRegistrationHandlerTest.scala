@@ -4,8 +4,8 @@ import akka.actor.{ ActorRef, ActorSystem, Props, Status }
 import akka.testkit.{ ImplicitSender, TestKit }
 import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditService
 import com.blinkbox.books.clients.accountcreditservice.AccountCredit
-import com.blinkbox.books.clients.authservice.AuthService
 import com.blinkbox.books.clients.authservice.UserProfile
+import com.blinkbox.books.clients.authservice.UserService
 import com.blinkbox.books.clients.NotFoundException
 import com.blinkbox.books.messaging._
 import com.blinkbox.books.schemas.events.user.v2
@@ -26,6 +26,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.xml.{ Elem, XML, Node }
 import scala.xml.Utility.trim
+import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
 
 @RunWith(classOf[JUnitRunner])
 class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) with ImplicitSender
@@ -33,7 +34,6 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
   val user1 = 101
   val user2 = 102
-  val authToken = "test auth token"
   val retryInterval = 100.millis
 
   /**
@@ -41,17 +41,17 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
    */
   trait TestFixture extends DeviceRegistrationFixture {
     // Define mocks and initialise them with default behaviour.
-    val offerDao: OfferHistoryService = mock[OfferHistoryService]
-    val accountCreditService: AdminAccountCreditService = mock[AdminAccountCreditService]
-    val authService: AuthService = mock[AuthService]
-    val errorHandler: ErrorHandler = mock[ErrorHandler]
-    val eventSender: EventSender = mock[EventSender]
+    val offerDao = mock[OfferHistoryService]
+    val accountCreditService = mock[AccountCreditService]
+    val userService = mock[UserService]
+    val errorHandler = mock[ErrorHandler]
+    val eventSender = mock[EventSender]
 
     doReturn(Future.successful(())).when(errorHandler).handleError(any[Event], any[Throwable])
 
     // Make these users known user.
-    when(authService.userProfile(eql(user1))(anyString)).thenReturn(Future.successful(userProfile(user1)))
-    when(authService.userProfile(eql(user2))(anyString)).thenReturn(Future.successful(userProfile(user2)))
+    when(userService.userProfile(eql(user1))).thenReturn(Future.successful(userProfile(user1)))
+    when(userService.userProfile(eql(user2))).thenReturn(Future.successful(userProfile(user2)))
 
     // This user has no previous grants hence is valid for the offer once.
     when(offerDao.grant(user1, offerId)).thenReturn(Some(grantedOffer(user1))).thenReturn(None)
@@ -60,7 +60,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     when(offerDao.grant(user2, offerId)).thenReturn(None)
 
     // Make crediting this user succeed.
-    when(accountCreditService.addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)(authToken))
+    when(accountCreditService.addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode))
       .thenReturn(Future.successful(AccountCredit(offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)))
 
     // The default object under test.
@@ -68,12 +68,12 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
     /** Create actor under test. */
     def createHandler(): ActorRef = system.actorOf(Props(
-      new DeviceRegistrationHandler(offerDao, accountCreditService, authService, eventSender, errorHandler, retryInterval)))
+      new DeviceRegistrationHandler(offerDao, accountCreditService, userService, eventSender, errorHandler, retryInterval)))
 
     /** Check that the event was processed successfully by checking the various outputs. */
     def checkSuccessfulResult(userId: Int) = {
       // Check that the user was credited - once and only once.
-      verify(accountCreditService, times(1)).addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)(authToken)
+      verify(accountCreditService, times(1)).addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)
 
       // Check output events were triggered.
       verify(eventSender).sendEvent(v2.User(v2.UserId(user1), username(user1), firstName(user1), lastName(user1)), offerAmount, offerId)
@@ -85,7 +85,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     /** Check that event processing failed and was treated correctly. */
     def checkFailure[T <: Throwable](event: Event)(implicit manifest: Manifest[T]) {
       // Check no user was credited.
-      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)(anyString)
+      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)
 
       // Check no events were sent.
       verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], anyString)
@@ -98,7 +98,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     /** Check that event was processed but ignored. */
     def checkIgnored() = {
       // Check that no user was credited.
-      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)(anyString)
+      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)
 
       // Check no events were sent.
       verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], anyString)
@@ -121,7 +121,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     expectMsgType[Status.Success]
 
     // Check it requested the right user details.
-    verify(authService).userProfile(eql(user1))(any[String])
+    verify(userService).userProfile(eql(user1))
 
     checkSuccessfulResult(user1)
   }
@@ -183,7 +183,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
   it should "recover from a temporary failure when getting user details" in new TestFixture {
     // Force a temporary exception to happen when getting user details.
     val tempException = new IOException("Test exception")
-    when(authService.userProfile(eql(user1))(anyString))
+    when(userService.userProfile(eql(user1)))
       .thenThrow(tempException)
       .thenThrow(tempException)
       .thenReturn(Future.successful(userProfile(user1)))
@@ -196,7 +196,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
   it should "recover from a temporary failure when adding credit to user" in new TestFixture {
     val tempException = new IOException("Test exception")
-    when(accountCreditService.addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)(authToken))
+    when(accountCreditService.addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode))
       .thenThrow(tempException)
       .thenThrow(tempException)
       .thenReturn(Future.successful(AccountCredit(offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)))
@@ -216,5 +216,4 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
     checkSuccessfulResult(user1)
   }
-
 }

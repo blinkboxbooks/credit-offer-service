@@ -39,7 +39,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     val deviceRegistration = DeviceRegistrationEvent.fromXML(event.body.content)
     val userId = deviceRegistration.userId;
     if (!isHudl2(deviceRegistration.device))
-      Future.successful()
+      Future.successful(())
     else
       for (
         userProfile <- userService.userProfile(userId);

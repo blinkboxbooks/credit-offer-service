@@ -15,7 +15,7 @@ object Promotion {
   }
 
   def unapplyTuple(promotion: Promotion) = {
-    Some(promotion.id, promotion.userId, promotion.offerId, promotion.createdAt, BigDecimal(promotion.creditedAmount.getAmount))
+    Some((promotion.id, promotion.userId, promotion.offerId, promotion.createdAt, BigDecimal(promotion.creditedAmount.getAmount)))
   }
 }
 

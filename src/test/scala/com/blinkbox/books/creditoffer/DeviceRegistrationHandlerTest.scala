@@ -2,18 +2,13 @@ package com.blinkbox.books.creditoffer
 
 import akka.actor.{ ActorRef, ActorSystem, Props, Status }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit }
-import com.blinkbox.books.clients.accountcreditservice.AccountCredit
-import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
-import com.blinkbox.books.clients.authservice.UserProfile
-import com.blinkbox.books.clients.authservice.UserService
-import com.blinkbox.books.clients.NotFoundException
+import com.blinkbox.books.clients._
+import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.messaging._
 import com.blinkbox.books.schemas.events.user.v2
 import java.io.IOException
-import org.joda.money.Money
-import org.joda.money.CurrencyUnit
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
+import org.joda.money.{ CurrencyUnit, Money }
+import org.joda.time.{ DateTime, DateTimeZone }
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Matchers.{ eq => eql }
@@ -23,7 +18,6 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import scala.concurrent.duration._
 import scala.concurrent.Future
-import com.blinkbox.books.clients.NotFoundException
 
 @RunWith(classOf[JUnitRunner])
 class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) with ImplicitSender
@@ -192,8 +186,8 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
       verify(accountCreditService, times(1)).addCredit(user1, offerAmount)
 
       // Check output events were triggered.
-      verify(eventSender).sendEvent(v2.User(v2.UserId(user1), username(user1), firstName(user1), lastName(user1)), 
-          offerAmount, offerTimestamp, offerId)
+      verify(eventSender).sendEvent(v2.User(v2.UserId(user1), username(user1), firstName(user1), lastName(user1)),
+        offerAmount, offerTimestamp, offerId)
     }
 
     def checkNoFailures() = {

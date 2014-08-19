@@ -1,16 +1,16 @@
 package com.blinkbox.books.creditoffer
 
 import com.blinkbox.books.config._
+import com.blinkbox.books.creditoffer.clients.Account
+import com.blinkbox.books.creditoffer.clients.AdminAccountCreditClientConfig
 import com.blinkbox.books.rabbitmq.RabbitMqConsumer
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
+import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher
 import com.typesafe.config.Config
-import java.net.URI
-import java.net.URL
+import java.net.{URI, URL}
 import java.util.concurrent.TimeUnit
 import org.joda.money.{CurrencyUnit, Money}
-
 import scala.concurrent.duration._
-import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher
 
 case class AppConfig(
   creditLimit: Money,
@@ -31,9 +31,6 @@ case class DbConfig(
   url: URI,
   username: String,
   password: String)
-
-case class AdminAccountCreditClientConfig(url: URL, timeout: FiniteDuration)
-case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration, username: String, password: String)
 
 case class MailerConfig(output: PublisherConfiguration, templateName: String, routingId: String)
 case class ExactTargetConfig(output: PublisherConfiguration, templateName: String)
@@ -67,19 +64,6 @@ object DbConfig {
       config.getString("password"))
 }
 
-object AdminAccountCreditClientConfig {
-  def apply(config: Config): AdminAccountCreditClientConfig = AdminAccountCreditClientConfig(
-    config.getHttpUrl("service.adminaccountcredit.api.admin.internalUrl"),
-    config.getDuration("service.adminaccountcredit.api.admin.timeout", TimeUnit.MILLISECONDS).millis)
-}
-
-object AuthServiceClientConfig {
-  def apply(config: Config): AuthServiceClientConfig = AuthServiceClientConfig(
-    config.getHttpUrl("service.auth.api.public.internalUrl"),
-    config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis,
-    config.getString("service.auth.api.public.username"),
-    config.getString("service.auth.api.public.password"))
-}
 
 object ExactTargetConfig {
   def apply(config: Config): ExactTargetConfig = ExactTargetConfig(

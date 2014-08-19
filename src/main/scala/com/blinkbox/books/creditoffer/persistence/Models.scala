@@ -1,4 +1,4 @@
-package com.blinkbox.books.creditoffer.persistence.models
+package com.blinkbox.books.creditoffer.persistence
 
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime

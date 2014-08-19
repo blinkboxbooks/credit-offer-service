@@ -1,8 +1,8 @@
-package com.blinkbox.books.creditoffer.persistence.models
+package com.blinkbox.books.creditoffer.persistence
 
-import com.blinkbox.books.creditoffer.persistence.support.JdbcSupport
 import org.joda.time.DateTime
 import scala.slick.driver.JdbcProfile
+import scala.slick.lifted.ProvenShape.proveShapeOf
 
 trait PromotionTables extends JdbcSupport {
 

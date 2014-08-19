@@ -1,13 +1,11 @@
 package com.blinkbox.books.creditoffer
 
-import com.blinkbox.books.creditoffer.persistence.cake.{TestDatabaseTypes, TestRepositoriesComponent, TestDatabaseComponent}
-import com.blinkbox.books.creditoffer.persistence.models._
+import com.blinkbox.books.creditoffer.persistence._
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, BeforeAndAfter, FlatSpec}
-
 import scala.slick.jdbc.meta.MTable._
 
 @RunWith(classOf[JUnitRunner])

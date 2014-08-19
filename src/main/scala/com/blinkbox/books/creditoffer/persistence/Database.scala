@@ -1,13 +1,9 @@
-package com.blinkbox.books.creditoffer.persistence.cake
-
-import java.sql.SQLIntegrityConstraintViolationException
-import javax.sql.DataSource
+package com.blinkbox.books.creditoffer.persistence
 
 import com.blinkbox.books.creditoffer.DbConfig
-import com.blinkbox.books.creditoffer.persistence.data._
-import com.blinkbox.books.creditoffer.persistence.models.PromotionTables
+import java.sql.SQLIntegrityConstraintViolationException
+import javax.sql.DataSource
 import org.apache.commons.dbcp.BasicDataSource
-
 import scala.reflect._
 import scala.slick.driver.{JdbcProfile, MySQLDriver}
 import scala.slick.jdbc.JdbcBackend.Database

@@ -1,17 +1,20 @@
-package com.blinkbox.books.clients.authservice
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.blinkbox.books.clients.{SendAndReceive, ClientPlumbing}
-import com.blinkbox.books.creditoffer.{AuthRetry, TokenProvider, AuthServiceClientConfig}
+import com.blinkbox.books.clients._
+import com.blinkbox.books.config._
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.StrictLogging
+import java.net.URL
+import java.util.concurrent.TimeUnit
 import org.json4s.{DefaultFormats, Formats}
 import spray.http.{FormData, HttpResponse}
 import spray.http.StatusCodes._
 import spray.httpx.Json4sJacksonSupport
 import spray.httpx.RequestBuilding.{Get, Post}
 import spray.httpx.marshalling.BasicMarshallers.FormDataMarshaller
-
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 trait AuthService {
@@ -81,3 +84,14 @@ object RetryingUserServiceClient {
 }
 
 case class ThrottledException(message: String, cause: Throwable = null) extends Exception(message, cause)
+
+case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration, username: String, password: String)
+
+object AuthServiceClientConfig {
+  def apply(config: Config): AuthServiceClientConfig = AuthServiceClientConfig(
+    config.getHttpUrl("service.auth.api.public.internalUrl"),
+    config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis,
+    config.getString("service.auth.api.public.username"),
+    config.getString("service.auth.api.public.password"))
+}
+

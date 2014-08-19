@@ -1,8 +1,6 @@
 package com.blinkbox.books.creditoffer
 
-import com.blinkbox.books.creditoffer.persistence.cake.DatabaseTypes
-import com.blinkbox.books.creditoffer.persistence.data.PromotionRepository
-import com.blinkbox.books.creditoffer.persistence.models.{Promotion, PromotionId}
+import com.blinkbox.books.creditoffer.persistence._
 import org.joda.money.Money
 import org.joda.time.{DateTimeZone, DateTime}
 

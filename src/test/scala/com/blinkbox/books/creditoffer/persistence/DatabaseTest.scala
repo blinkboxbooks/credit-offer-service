@@ -1,9 +1,7 @@
-package com.blinkbox.books.creditoffer.persistence.cake
+package com.blinkbox.books.creditoffer.persistence
 
 import javax.sql.DataSource
 
-import com.blinkbox.books.creditoffer.persistence.data.DefaultPromotionRepository
-import com.blinkbox.books.creditoffer.persistence.models.PromotionTables
 import org.apache.commons.dbcp.BasicDataSource
 import org.h2.jdbc.JdbcSQLException
 

@@ -9,5 +9,3 @@ CREATE TABLE `promotions` (
   `credited_amount` decimal(10,0) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-SET FOREIGN_KEY_CHECKS = 1;

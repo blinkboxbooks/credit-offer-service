@@ -3,7 +3,7 @@ package com.blinkbox.books.creditoffer.persistence
 import com.blinkbox.books.creditoffer.DbConfig
 import java.sql.SQLIntegrityConstraintViolationException
 import javax.sql.DataSource
-import org.apache.commons.dbcp.BasicDataSource
+import org.apache.commons.dbcp2.BasicDataSource
 import scala.reflect._
 import scala.slick.driver.{JdbcProfile, MySQLDriver}
 import scala.slick.jdbc.JdbcBackend.Database
@@ -40,7 +40,7 @@ trait DefaultDatabaseComponent extends DatabaseComponent[DefaultDatabaseTypes] {
     ds.setDriverClassName("com.mysql.jdbc.Driver")
     ds.setUsername(dbSettings.username)
     ds.setPassword(dbSettings.password)
-    ds.setMaxActive(20)
+    ds.setMaxTotal(20)
     ds.setMaxIdle(10)
     ds.setUrl(dbSettings.url.toString)
     ds

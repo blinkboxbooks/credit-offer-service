@@ -7,7 +7,6 @@ import com.blinkbox.books.schemas.events.user.v2.{User, UserId}
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import java.io.IOException
 import java.util.concurrent.TimeoutException
-import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration

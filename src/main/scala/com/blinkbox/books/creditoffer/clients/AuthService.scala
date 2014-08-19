@@ -77,7 +77,10 @@ class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: 
 
   import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
 
-  override def userProfile(userId: Int): Future[UserProfile] = withAuthRetry(super.userProfile(userId, _))
+  override def userProfile(userId: Int): Future[UserProfile] = {
+    logger.info(s"Retrieving user details for user with id: $userId")
+    withAuthRetry(super.userProfile(userId, _))
+  }
 }
 
 object RetryingUserServiceClient {

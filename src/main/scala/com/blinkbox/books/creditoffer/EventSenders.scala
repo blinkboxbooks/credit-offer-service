@@ -7,6 +7,7 @@ import com.blinkbox.books.messaging.Event
 import com.blinkbox.books.messaging.EventHeader
 import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.User.Credited
+import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.money.Money
@@ -31,10 +32,11 @@ object EventSender {
 
 // Publish Email XML message to Mailer's exchange. 
 class MailerEventSender(delegate: ActorRef, templateName: String, routingId: String)(implicit ec: ExecutionContext, timeout: Timeout)
-  extends EventSender {
+  extends EventSender with StrictLogging {
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val content = buildEmailContent(user, creditedAmount, offer)
+    logger.info(s"Sending credit event for Mailer: $content")
     delegate ! Event.xml(content, EventHeader(EventSender.Originator))
   }
 
@@ -68,11 +70,12 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 }
 
 // Publish new-style JSON message to Agora header exchange.
-class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
+class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender with StrictLogging {
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val attributes = Map("firstName" -> user.firstName, "lastName" -> user.lastName)
     val emailTrigger = Email.Send(timestamp, Email.User(user.username, user.id.value.toString), templateName, attributes)
+    logger.info(s"Sending credit event for ExactTarget: $emailTrigger")
     delegate ! Event.json(EventHeader(EventSender.Originator), emailTrigger)
   }
 
@@ -99,11 +102,13 @@ object Email {
 // --------------
 
 // Publish User.Credited JSON message to Agora header exchange.
-class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
+class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender
+  with StrictLogging {
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val creditEvent = User.Credited(timestamp, user,
       creditedAmount.getAmount, creditedAmount.getCurrencyUnit.getCurrencyCode, offer)
+    logger.info(s"Sending credit event for Reporting service: $creditEvent")
     delegate ! Event.json(EventHeader(EventSender.Originator), creditEvent)
   }
 

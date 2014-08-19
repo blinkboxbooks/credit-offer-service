@@ -61,7 +61,9 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
 
   private def authTokensResponseHandler: PartialFunction[HttpResponse, AuthTokens] = {
     case resp if resp.status == OK => unmarshal(json4sUnmarshaller[AuthTokens])(resp.entity)
-    case resp if resp.status == TooManyRequests => throw ThrottledException(resp.entity.data.asString) // TODO: include Retry-After header info
+    case resp if resp.status == TooManyRequests =>
+      val retryInterval = resp.headers.find(_.is("retry-after")).map(_.value)
+      throw ThrottledException(retryInterval.fold("")(seconds => s"Retry after ${seconds}s"))
   }
 }
 

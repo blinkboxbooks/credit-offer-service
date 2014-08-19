@@ -1,9 +1,6 @@
-package com.blinkbox.books.creditoffer.persistence.data
+package com.blinkbox.books.creditoffer.persistence
 
-import com.blinkbox.books.creditoffer.persistence.support.SlickSupport
-import com.blinkbox.books.creditoffer.persistence.models._
 import org.joda.money.{CurrencyUnit, Money}
-
 import scala.slick.driver.JdbcProfile
 import scala.slick.profile.BasicProfile
 

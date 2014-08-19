@@ -1,12 +1,9 @@
 package com.blinkbox.books.creditoffer
 
-import com.blinkbox.books.clients.authservice.UserProfile
-import com.blinkbox.books.messaging.Event
-import com.blinkbox.books.messaging.EventHeader
-import org.joda.money.CurrencyUnit
-import org.joda.money.Money
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
+import com.blinkbox.books.creditoffer.clients.UserProfile
+import com.blinkbox.books.messaging.{Event,EventHeader}
+import org.joda.money.{CurrencyUnit,Money}
+import org.joda.time.{DateTime,DateTimeZone}
 
 /**
  * Helper code for generating test data.

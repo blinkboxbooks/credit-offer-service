@@ -1,24 +1,22 @@
-package com.blinkbox.books.clients.authservice
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorRefFactory
 import akka.util.Timeout
-import com.blinkbox.books.clients.{UnauthorizedException, SendAndReceive}
+import akka.util.Timeout.durationToTimeout
+import com.blinkbox.books.clients.SendAndReceive
 import com.blinkbox.books.config.Configuration
-import com.blinkbox.books.creditoffer.AuthServiceClientConfig
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
-import org.scalatest.concurrent.{AsyncAssertions, ScalaFutures}
+import org.scalatest.concurrent.{ AsyncAssertions, ScalaFutures }
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.time.{Millis, Seconds, Span}
-import spray.http.ContentTypes.`application/json`
+import org.scalatest.time.{ Millis, Seconds, Span }
 import spray.http._
-
+import spray.http.ContentTypes.`application/json`
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
-
+import scala.util.{ Failure, Success }
 
 @RunWith(classOf[JUnitRunner])
 class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions with Configuration with MockitoSugar {
@@ -64,11 +62,9 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
       assert(result == UserProfile("credit-offer-service@blinkbox.com", "credit-offer", "service"))
     }
   }
-}
 
-
-trait OkSendReceiveMock extends SendAndReceive {
-  val resp = """{
+  trait OkSendReceiveMock extends SendAndReceive {
+    val resp = """{
       |"access_token":"someaccesstoken",
       |"token_type":"bearer",
       |"expires_in":1800,
@@ -79,28 +75,28 @@ trait OkSendReceiveMock extends SendAndReceive {
       |"user_first_name":"credit-offer",
       |"user_last_name":"service"}""".stripMargin
 
-  override def sendAndReceive(implicit refFactory: ActorRefFactory,
-                              executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
-    (req: HttpRequest) => Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
+    override def sendAndReceive(implicit refFactory: ActorRefFactory,
+      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+      (req: HttpRequest) => Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
+    }
   }
-}
 
-trait ThrottledSendReceiveMock extends SendAndReceive {
-  val resp = """{
+  trait ThrottledSendReceiveMock extends SendAndReceive {
+    val resp = """{
                |  "error": "throttled",
                |  "message": "Too many requests"
                |}""".stripMargin
 
-  override def sendAndReceive(implicit refFactory: ActorRefFactory,
-                              executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
-    (req: HttpRequest) =>
-      Future.successful(HttpResponse(StatusCodes.TooManyRequests, HttpEntity(`application/json`, resp)))
+    override def sendAndReceive(implicit refFactory: ActorRefFactory,
+      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+      (req: HttpRequest) =>
+        Future.successful(HttpResponse(StatusCodes.TooManyRequests, HttpEntity(`application/json`, resp)))
+    }
   }
-}
 
-trait UserProfileSendReceiveMock extends SendAndReceive {
-  val resp =
-    """{
+  trait UserProfileSendReceiveMock extends SendAndReceive {
+    val resp =
+      """{
       |"user_id":"urn:blinkbox:zuul:user:1926",
       |"user_uri":"/users/1926",
       |"user_username":"credit-offer-service@blinkbox.com",
@@ -110,9 +106,11 @@ trait UserProfileSendReceiveMock extends SendAndReceive {
       |"user_previous_usernames":[]
       |}""".stripMargin
 
-  override def sendAndReceive(implicit refFactory: ActorRefFactory,
-                              executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
-    (req: HttpRequest) =>
-      Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
+    override def sendAndReceive(implicit refFactory: ActorRefFactory,
+      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+      (req: HttpRequest) =>
+        Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
+    }
   }
+
 }

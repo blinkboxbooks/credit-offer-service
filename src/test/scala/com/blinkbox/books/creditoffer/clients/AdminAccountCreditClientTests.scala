@@ -1,20 +1,22 @@
-package com.blinkbox.books.clients.accountcreditservice
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorRefFactory
 import akka.util.Timeout
+import akka.util.Timeout.durationToTimeout
 import com.blinkbox.books.clients.SendAndReceive
 import com.blinkbox.books.config.Configuration
-import com.blinkbox.books.creditoffer.AdminAccountCreditClientConfig
 import com.blinkbox.books.spray.v1._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.time.{Seconds, Span, Millis}
-import spray.http._
-import scala.concurrent.{Future, ExecutionContext}
+import org.scalatest.time.{ Seconds, Span, Millis }
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit
+import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.duration.DurationInt
+import spray.http._
+import spray.http.ContentType.apply
 
 @RunWith(classOf[JUnitRunner])
 class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Configuration {
@@ -31,19 +33,21 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
       assert(result == AccountCredit(amount))
     }
   }
-}
 
-trait OkSendReceiveMock extends SendAndReceive {
-  import scala.concurrent.duration._
+  trait OkSendReceiveMock extends SendAndReceive {
+    import scala.concurrent.duration._
 
-  MediaTypes.register(`application/vnd.blinkboxbooks.data.v1+json`)
-  val resp = """{"type":"urn:blinkboxbooks:schema:admin:credit","amount":"10.00","currency":"GBP"}""".stripMargin
+    MediaTypes.register(`application/vnd.blinkboxbooks.data.v1+json`)
+    val resp = """{"type":"urn:blinkboxbooks:schema:admin:credit","amount":"10.00","currency":"GBP"}""".stripMargin
 
-  override def sendAndReceive(implicit refFactory: ActorRefFactory,
-                              executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
-    (req: HttpRequest) => {
-      val response = HttpResponse(StatusCodes.OK, HttpEntity(`application/vnd.blinkboxbooks.data.v1+json`, resp))
-      Future.successful(response)
+    override def sendAndReceive(implicit refFactory: ActorRefFactory,
+      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+      (req: HttpRequest) =>
+        {
+          val response = HttpResponse(StatusCodes.OK, HttpEntity(`application/vnd.blinkboxbooks.data.v1+json`, resp))
+          Future.successful(response)
+        }
     }
   }
+
 }

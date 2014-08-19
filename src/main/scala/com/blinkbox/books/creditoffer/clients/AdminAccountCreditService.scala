@@ -1,12 +1,15 @@
-package com.blinkbox.books.clients.accountcreditservice
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.blinkbox.books.clients.{ SendAndReceive, ClientPlumbing }
-import com.blinkbox.books.creditoffer.{ AuthRetry, TokenProvider, AdminAccountCreditClientConfig }
+import com.blinkbox.books.clients._
+import com.blinkbox.books.config._
 import com.blinkbox.books.spray.JsonFormats._
 import com.blinkbox.books.spray.v1.Version1JsonSupport
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.StrictLogging
+import java.net.URL
+import java.util.concurrent.TimeUnit
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit
 import org.json4s.{ Formats, CustomSerializer }
@@ -15,6 +18,10 @@ import spray.http.{ HttpEntity, HttpResponse }
 import spray.http.StatusCodes._
 import spray.httpx.RequestBuilding.Post
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.math.BigDecimal.javaBigDecimal2bigDecimal
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 case class AccountCredit(amount: BigDecimal, currency: String) {
   def asMoney = Money.of(CurrencyUnit.of(currency), amount.bigDecimal)
@@ -25,6 +32,14 @@ object AccountCredit {
 case class AccountCreditReq(amount: BigDecimal, currency: String, reason: String)
 object AccountCreditReq {
   def apply(amount: Money, reason: String) = new AccountCreditReq(amount.getAmount, amount.getCurrencyUnit.getCurrencyCode, reason)
+}
+
+case class AdminAccountCreditClientConfig(url: URL, timeout: FiniteDuration)
+
+object AdminAccountCreditClientConfig {
+  def apply(config: Config): AdminAccountCreditClientConfig = AdminAccountCreditClientConfig(
+    config.getHttpUrl("service.adminaccountcredit.api.admin.internalUrl"),
+    config.getDuration("service.adminaccountcredit.api.admin.timeout", TimeUnit.MILLISECONDS).millis)
 }
 
 trait AdminAccountCreditService {

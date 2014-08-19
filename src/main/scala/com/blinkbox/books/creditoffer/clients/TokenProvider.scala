@@ -1,4 +1,4 @@
-package com.blinkbox.books.creditoffer
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.{ActorRef, Stash, Actor}
 import akka.pattern.ask
@@ -6,8 +6,6 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import com.blinkbox.books.clients.UnauthorizedException
 import scala.concurrent.duration._
-
-import com.blinkbox.books.clients.authservice.{AuthTokens, AuthService}
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -1,15 +1,14 @@
 package com.blinkbox.books.creditoffer
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
-import com.blinkbox.books.clients.accountcreditservice.RetryingAdminAccountCreditServiceClient
-import com.blinkbox.books.clients.authservice.{RetryingUserServiceClient, AuthServiceClient}
+import com.blinkbox.books.creditoffer.clients._
+import com.blinkbox.books.creditoffer.persistence._
 import com.blinkbox.books.config.Configuration
-import com.blinkbox.books.creditoffer.persistence.cake._
 import com.blinkbox.books.logging.Loggers
 import com.blinkbox.books.messaging.ActorErrorHandler
-import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.rabbitmq._
+import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.typesafe.scalalogging.slf4j.StrictLogging
 
 /**

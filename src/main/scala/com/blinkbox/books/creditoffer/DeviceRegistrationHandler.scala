@@ -1,12 +1,9 @@
 package com.blinkbox.books.creditoffer
 
 import akka.actor.ActorRef
-import com.blinkbox.books.clients.accountcreditservice.AccountCredit
-import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
-import com.blinkbox.books.clients.authservice.{ UserService, UserProfile }
+import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.messaging._
-import com.blinkbox.books.schemas.events.user.v2.User
-import com.blinkbox.books.schemas.events.user.v2.UserId
+import com.blinkbox.books.schemas.events.user.v2.{User, UserId}
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import java.io.IOException
 import java.util.concurrent.TimeoutException

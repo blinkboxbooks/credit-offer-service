@@ -1,18 +1,17 @@
-package com.blinkbox.books.creditoffer
+package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.util.Timeout
 import com.blinkbox.books.clients.RequestTimeoutException
-import com.blinkbox.books.clients.authservice.{AuthService, AuthTokens}
 import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.test.MockitoSyrup
 import org.junit.runner.RunWith
+import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, FunSuiteLike}
 import org.scalatest.junit.JUnitRunner
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import org.mockito.Mockito._
 
 
 @RunWith(classOf[JUnitRunner])

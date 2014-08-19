@@ -3,12 +3,8 @@ package com.blinkbox.books.creditoffer
 import akka.actor.{ ActorRef, ActorSystem, Props, Status }
 import akka.testkit.{ ImplicitSender, TestKit, TestProbe }
 import akka.util.Timeout
-import com.blinkbox.books.clients.accountcreditservice.AdminAccountCreditService
-import com.blinkbox.books.clients.authservice.AuthService
-import com.blinkbox.books.creditoffer.persistence.cake.TestRepositoriesComponent
-import com.blinkbox.books.creditoffer.persistence.cake.TestDatabaseComponent
-import com.blinkbox.books.creditoffer.persistence.cake.TestDatabaseTypes
-import com.blinkbox.books.creditoffer.persistence.models.Promotion
+import com.blinkbox.books.creditoffer.clients._
+import com.blinkbox.books.creditoffer.persistence._
 import com.blinkbox.books.messaging.ErrorHandler
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher
 import org.joda.money.CurrencyUnit
@@ -19,8 +15,6 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import scala.concurrent.duration._
 import akka.actor.Status.Success
-import com.blinkbox.books.clients.accountcreditservice.AccountCreditService
-import com.blinkbox.books.clients.authservice.UserService
 
 @RunWith(classOf[JUnitRunner])
 class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter with MockitoSugar with StreamlinedXmlEquality

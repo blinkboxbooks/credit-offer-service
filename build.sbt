@@ -38,7 +38,7 @@ val dependencySettings = Seq(
 )
 
 // Needed to keep database tests happy, it seems. Would be good to use unique names for test DBs to avoid this problem.
-parallelExecution := false
+parallelExecution in Test := false
 
 rpmPrepSettings
 

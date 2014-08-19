@@ -141,7 +141,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
   }
 
   it should "not retry any part of the workflow when a failure happens on sending events" in new TestFixture {
-    when(eventSender.sendEvent(any[v2.User], any[Money], any[String]))
+    when(eventSender.sendEvent(any[v2.User], any[Money], any[DateTime], any[String]))
       .thenThrow(new RuntimeException("Test exception"))
 
     handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)
@@ -176,8 +176,8 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     when(offerDao.grant(user2, offerId)).thenReturn(None)
 
     // Make crediting this user succeed.
-    when(accountCreditService.addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode))
-      .thenReturn(Future.successful(AccountCredit(offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)))
+    when(accountCreditService.addCredit(user1, offerAmount))
+      .thenReturn(Future.successful(AccountCredit(offerAmount)))
 
     // The default object under test.
     val handler = createHandler()
@@ -189,10 +189,11 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     /** Check that the event was processed successfully by checking the various outputs. */
     def checkSuccessfulResult(userId: Int) = {
       // Check that the user was credited - once and only once.
-      verify(accountCreditService, times(1)).addCredit(user1, offerAmount.getAmount, offerAmount.getCurrencyUnit.getCurrencyCode)
+      verify(accountCreditService, times(1)).addCredit(user1, offerAmount)
 
       // Check output events were triggered.
-      verify(eventSender).sendEvent(v2.User(v2.UserId(user1), username(user1), firstName(user1), lastName(user1)), offerAmount, offerId)
+      verify(eventSender).sendEvent(v2.User(v2.UserId(user1), username(user1), firstName(user1), lastName(user1)), 
+          offerAmount, offerTimestamp, offerId)
     }
 
     def checkNoFailures() = {
@@ -203,10 +204,10 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     /** Check that event processing failed and was treated correctly. */
     def checkFailure[T <: Throwable](event: Event)(implicit manifest: Manifest[T]) {
       // Check no user was credited.
-      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)
+      verify(accountCreditService, times(0)).addCredit(anyInt, any[Money])
 
       // Check no events were sent.
-      verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], anyString)
+      verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], any[DateTime], anyString)
 
       // Check event was passed on to error handler, along with the expected exception.
       val expectedExceptionClass = manifest.runtimeClass.asInstanceOf[Class[T]]
@@ -216,10 +217,10 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     /** Check that event was processed but ignored. */
     def checkIgnored() = {
       // Check that no user was credited.
-      verify(accountCreditService, times(0)).addCredit(anyInt, any[BigDecimal], anyString)
+      verify(accountCreditService, times(0)).addCredit(anyInt, any[Money])
 
       // Check no events were sent.
-      verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], anyString)
+      verify(eventSender, times(0)).sendEvent(any[v2.User], any[Money], any[DateTime], anyString)
 
       // Should not have posted an error.
       verify(errorHandler, times(0)).handleError(any[Event], any[Throwable])

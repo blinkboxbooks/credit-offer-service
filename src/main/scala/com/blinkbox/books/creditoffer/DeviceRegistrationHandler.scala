@@ -39,14 +39,14 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     val deviceRegistration = DeviceRegistrationEvent.fromXML(event.body.content)
     val userId = deviceRegistration.userId;
     if (!isHudl2(deviceRegistration.device))
-      Future.successful()
+      Future.successful(())
     else
       for (
         userProfile <- userService.userProfile(userId);
-        granted <- Future(offerDao.grant(userId, offerCode));
-        creditedOption <- optionallyCredit(userId, granted);
-        creditedAmountOption = creditedOption.map(c => Money.of(CurrencyUnit.of(c.currency), c.amount.bigDecimal)); // TODO: Make client APIs return Money instead.
-        _ = sendIfCredited(creditedAmountOption, UserId(userId), userProfile, offerCode)
+        grantedOption <- Future(offerDao.grant(userId, offerCode));
+        creditedOption <- optionallyCredit(userId, grantedOption);
+        creditedAmountOption = creditedOption.map(_.asMoney);
+        _ = sendIfCredited(creditedAmountOption, grantedOption, UserId(userId), userProfile, offerCode)
       ) yield ()
   }
 
@@ -59,16 +59,16 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   private def isHudl2(device: DeviceDetails): Boolean = device.brand == Hudl2Brand && device.model == Hudl2Model
 
   private def optionallyCredit(userId: Int, granted: Option[GrantedOffer]): Future[Option[AccountCredit]] = granted match {
-    case Some(grant) =>
-      accountCreditService.addCredit(userId, grant.creditedAmount.getAmount, grant.creditedAmount.getCurrencyUnit.getCode)
-        .map(res => Some(res))
+    case Some(grant) => accountCreditService.addCredit(userId, grant.creditedAmount).map(res => Some(res))
     case None => Future.successful(None)
   }
 
-  private def sendIfCredited(creditAmount: Option[Money], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] = creditAmount match {
-    case Some(amount) => Future(eventSender.sendEvent(User(userId, userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), amount, offer))
-    case None => Future.successful(None)
-  }
+  private def sendIfCredited(creditAmount: Option[Money], granted: Option[GrantedOffer], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] =
+    (creditAmount, granted) match {
+      case (Some(amount), Some(grant)) => Future(eventSender.sendEvent(
+        User(userId, userProfile.user_username, userProfile.user_first_name, userProfile.user_last_name), amount, grant.createdAt, offer))
+      case _ => Future.successful(None)
+    }
 
 }
 

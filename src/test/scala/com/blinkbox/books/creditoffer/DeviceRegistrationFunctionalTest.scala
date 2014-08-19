@@ -87,7 +87,7 @@ class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter 
     expectMsgType[Status.Success]
 
     // TODO: Check that user was given credit.
-    //    fail("TODO")
+    fail("TODO")
   }
 
   ignore should "Should ignore Hudl 2 registration for user that has received the offer already" in new TestFixture {
@@ -118,7 +118,7 @@ class DeviceRegistrationFunctionalTest extends FlatSpecLike with BeforeAndAfter 
   }
 
   "A handler configured to use the Mailer" should "send Mailer events on succesful user credit" ignore new TestFixture(useExactTarget = false) {
-    //    fail("TODO")
+    fail("TODO")
   }
 
 }

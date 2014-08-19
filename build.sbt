@@ -3,7 +3,8 @@ val buildSettings = Seq(
   name := "credit-offer-service",
   version := scala.util.Try(scala.io.Source.fromFile("VERSION").mkString.trim).getOrElse("0.0.0"),
   scalaVersion  := "2.10.4",
-  scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8", "-target:jvm-1.7")
+  scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8", "-target:jvm-1.7",
+    "-Xfatal-warnings", "-Xlint", "-Yno-adapted-args", "-Xfuture")
 )
 
 val dependencySettings = Seq(
@@ -35,6 +36,9 @@ val dependencySettings = Seq(
     )
   }
 )
+
+// Needed to keep database tests happy, it seems. Would be good to use unique names for test DBs to avoid this problem.
+parallelExecution in Test := false
 
 rpmPrepSettings
 

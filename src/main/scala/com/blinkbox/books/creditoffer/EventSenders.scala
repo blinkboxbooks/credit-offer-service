@@ -21,7 +21,7 @@ trait EventSender {
   /**
    *  Send event fire-and-forget style, the implementations will handle retrying on failure.
    */
-  def sendEvent(user: User, creditedAmount: Money, offer: String): Unit
+  def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String): Unit
 
 }
 
@@ -30,9 +30,10 @@ object EventSender {
 }
 
 // Publish Email XML message to Mailer's exchange. 
-class MailerEventSender(delegate: ActorRef, templateName: String, routingId: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
+class MailerEventSender(delegate: ActorRef, templateName: String, routingId: String)(implicit ec: ExecutionContext, timeout: Timeout)
+  extends EventSender {
 
-  override def sendEvent(user: User, creditedAmount: Money, offer: String) = {
+  override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val content = buildEmailContent(user, creditedAmount, offer)
     delegate ! Event.xml(content, EventHeader(EventSender.Originator))
   }
@@ -69,10 +70,9 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 // Publish new-style JSON message to Agora header exchange.
 class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
-  override def sendEvent(user: User, creditedAmount: Money, offer: String) = {
-    val attributes = Map("name" -> user.username, "amount" -> creditedAmount.getAmount.toString)
-    val emailTrigger = Email.Send(DateTime.now(DateTimeZone.UTC), Email.User(user.username, user.id.value.toString /*??*/ ),
-      templateName, attributes)
+  override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
+    val attributes = Map("firstName" -> user.firstName, "lastName" -> user.lastName)
+    val emailTrigger = Email.Send(timestamp, Email.User(user.username, user.id.value.toString), templateName, attributes)
     delegate ! Event.json(EventHeader(EventSender.Originator), emailTrigger)
   }
 
@@ -101,8 +101,8 @@ object Email {
 // Publish User.Credited JSON message to Agora header exchange.
 class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender {
 
-  override def sendEvent(user: User, creditedAmount: Money, offer: String) = {
-    val creditEvent = User.Credited(DateTime.now(DateTimeZone.UTC), user,
+  override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
+    val creditEvent = User.Credited(timestamp, user,
       creditedAmount.getAmount, creditedAmount.getCurrencyUnit.getCurrencyCode, offer)
     delegate ! Event.json(EventHeader(EventSender.Originator), creditEvent)
   }
@@ -111,6 +111,6 @@ class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, ti
 
 /** Pass on event to a number of event senders. */
 class CompoundEventSender(delegates: EventSender*) extends EventSender {
-  override def sendEvent(user: User, creditedAmount: Money, offer: String) =
-    delegates.foreach(delegate => Try(delegate.sendEvent(user, creditedAmount, offer)))
+  override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) =
+    delegates.foreach(delegate => Try(delegate.sendEvent(user, creditedAmount, timestamp, offer)))
 }

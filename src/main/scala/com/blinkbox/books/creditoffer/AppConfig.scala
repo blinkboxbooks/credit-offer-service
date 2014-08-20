@@ -22,14 +22,9 @@ case class AppConfig(
   mailer: MailerConfig,
   reportingOutput: PublisherConfiguration,
   error: PublisherConfiguration,
-  db: DbConfig,
+  db: DatabaseConfig,
   useExactTarget: Boolean,
   account: Account)
-
-case class DbConfig(
-  url: URI,
-  username: String,
-  password: String)
 
 case class MailerConfig(output: PublisherConfiguration, templateName: String, routingId: String)
 case class ExactTargetConfig(output: PublisherConfiguration, templateName: String)
@@ -47,21 +42,12 @@ object AppConfig {
       MailerConfig(serviceConfig.getConfig("mailer")),
       RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("reportingOutput")),
       RabbitMqConfirmedPublisher.PublisherConfiguration(serviceConfig.getConfig("error")),
-      DbConfig(serviceConfig.getConfig("db")),
+      DatabaseConfig(serviceConfig.getUri("db.url")),
       serviceConfig.getBoolean("useExactTarget"),
       Account(serviceConfig.getString("account.username"), serviceConfig.getString("account.password"))
     )
   }
 }
-
-object DbConfig {
-  def apply(config: Config): DbConfig =
-    DbConfig(
-      config.getUri("url"),
-      config.getString("username"),
-      config.getString("password"))
-}
-
 
 object ExactTargetConfig {
   def apply(config: Config): ExactTargetConfig = ExactTargetConfig(

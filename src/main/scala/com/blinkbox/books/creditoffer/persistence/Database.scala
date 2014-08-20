@@ -1,8 +1,8 @@
 package com.blinkbox.books.creditoffer.persistence
 
-import com.blinkbox.books.creditoffer.DbConfig
 import java.sql.SQLIntegrityConstraintViolationException
 import javax.sql.DataSource
+import com.blinkbox.books.config.DatabaseConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import scala.reflect._
 import scala.slick.driver.{JdbcProfile, MySQLDriver}
@@ -43,14 +43,14 @@ trait DefaultDatabaseComponent extends DatabaseComponent[DefaultDatabaseTypes] {
   lazy val dataSource : DataSource = {
     val ds = new BasicDataSource
     ds.setDriverClassName("com.mysql.jdbc.Driver")
-    ds.setUsername(dbSettings.username)
-    ds.setPassword(dbSettings.password)
+    ds.setUsername(dbSettings.user)
+    ds.setPassword(dbSettings.pass)
     ds.setMaxTotal(20)
     ds.setMaxIdle(10)
-    ds.setUrl(dbSettings.url.toString)
+    ds.setUrl(dbSettings.jdbcUrl)
     ds
   }
-  def dbSettings: DbConfig
+  def dbSettings: DatabaseConfig
 }
 
 trait DefaultRepositoriesComponent extends RepositoriesComponent[DefaultDatabaseTypes] {

@@ -12,7 +12,7 @@ val dependencySettings = Seq(
     val akkaV = "2.3.3"
     val sprayV = "1.3.1"
     Seq(
-    "com.blinkbox.books"        %%         "common-config"          % "1.0.0",
+    "com.blinkbox.books"        %%         "common-config"          % "1.0.1",
     "com.blinkbox.books"        %%         "common-messaging"       % "1.1.1",
     "com.blinkbox.books"        %%         "common-scala-test"      % "0.2.1"                   % "test",
     "com.blinkbox.books"        %%         "common-spray"           % "0.14.1",

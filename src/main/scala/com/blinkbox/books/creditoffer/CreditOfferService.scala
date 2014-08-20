@@ -17,7 +17,7 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 object CreditOfferService extends App with Configuration with StrictLogging with Loggers
   with DefaultDatabaseComponent with DefaultRepositoriesComponent {
 
-  logger.info(s"Starting Credit Offer service with config: $config")
+  logger.info(s"Starting Credit Offer service")
 
   // Get configuration
   val appConfig = AppConfig(config)

@@ -9,6 +9,11 @@ import scala.slick.driver.{JdbcProfile, MySQLDriver}
 import scala.slick.jdbc.JdbcBackend.Database
 import scala.slick.profile.BasicProfile
 
+//
+// Common traits for database access with Slick.
+// NOTE: This should be replaced with a common DB library when this is available.
+//
+
 trait DatabaseTypes {
   type Profile <: BasicProfile
   type ConstraintException <: Throwable

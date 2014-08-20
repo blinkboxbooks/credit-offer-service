@@ -25,20 +25,32 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   val consumerConnection = RabbitMq.reliableConnection(RabbitMqConfig(config))
   val publisherConnection = RabbitMq.recoveredConnection(RabbitMqConfig(config))
 
+  // Initialise database access.
+  override def dbSettings = appConfig.db
+  val offerDao = new DefaultOfferHistoryService[DefaultDatabaseTypes](
+    db, promotionRepository, appConfig.creditAmount, appConfig.creditLimit)
+
   // Initialise the actor system.
   implicit val system = ActorSystem("credit-offer-service")
   implicit val ec = system.dispatcher
   implicit val requestTimeout = Timeout(appConfig.requestTimeout)
 
-  // Connect to DB.
-  val offerDao = new DefaultOfferHistoryService[DefaultDatabaseTypes](db, promotionRepository, appConfig.creditAmount, appConfig.creditLimit)
+  logger.debug("Initialising actors")
+
+  private def publisher(config: PublisherConfiguration, actorName: String) =
+    system.actorOf(Props(new RabbitMqConfirmedPublisher(publisherConnection, config)), name = actorName)
 
   val reportingPublisher = publisher(appConfig.reportingOutput, "reporting-publisher")
-
-  logger.debug("Initialising actors")
   val deviceRegErrorHandler = new ActorErrorHandler(publisher(appConfig.error, "registration-error-publisher"))
+  val mailEventSender = if (appConfig.useExactTarget) {
+    val exactTargetPublisher = publisher(appConfig.exactTarget.output, "exact-target-publisher")
+    new EmailEventSender(exactTargetPublisher, appConfig.exactTarget.templateName)
+  } else {
+    val mailerPublisher = publisher(appConfig.mailer.output, "mailer-publisher")
+    new MailerEventSender(mailerPublisher, appConfig.mailer.templateName, appConfig.mailer.routingId)
+  }
+  val eventSender = new CompoundEventSender(new ReportingEventSender(reportingPublisher), mailEventSender)
 
-  val eventSender = buildEventSender(appConfig.useExactTarget)
   val authClient = AuthServiceClient(AuthServiceClientConfig(config))
   val tokenProviderActor = system.actorOf(Props(classOf[ZuulTokenProviderActor], appConfig.account, authClient),
     name = "zuul-token-provider-actor")
@@ -50,22 +62,6 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, adminAccountCreditService, userService, eventSender,
       deviceRegErrorHandler, appConfig.retryTime)), name = "device-registration-event-handler")
-
-  override def dbSettings = appConfig.db
-
-  private[creditoffer] def buildEventSender(userExactTarget: Boolean) = {
-    val mailEventSender = if (appConfig.useExactTarget) {
-      val exactTargetPublisher = publisher(appConfig.exactTarget.output, "exact-target-publisher")
-      new EmailEventSender(exactTargetPublisher, appConfig.exactTarget.templateName)
-    } else {
-      val mailerPublisher = publisher(appConfig.mailer.output, "mailer-publisher")
-      new MailerEventSender(mailerPublisher, appConfig.mailer.templateName, appConfig.mailer.routingId)
-    }
-    new CompoundEventSender(new ReportingEventSender(reportingPublisher), mailEventSender)
-  }
-
-  private def publisher(config: PublisherConfiguration, actorName: String) =
-    system.actorOf(Props(new RabbitMqConfirmedPublisher(publisherConnection, config)), name = actorName)
 
   // Create the actor that consumes messages from RabbitMQ, and kick it off.
   system.actorOf(Props(new RabbitMqConsumer(consumerConnection.createChannel, appConfig.input,

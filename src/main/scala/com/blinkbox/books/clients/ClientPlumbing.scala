@@ -15,6 +15,9 @@ import spray.httpx.unmarshalling._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+ * NOTE: This is code that should move into a common HTTP client library.
+ */
 trait ClientPlumbing extends StrictLogging {
   this: SendAndReceive =>
 

@@ -17,8 +17,6 @@ trait OfferHistoryService {
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer]
 
-  def listAllGrantedUsersForOffer(offerId: String): Seq[GrantedOffer]
-
 }
 
 case class GrantedOffer(userId: Int, offerId: String, creditedAmount: Money, createdAt: DateTime)
@@ -57,9 +55,4 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         new GrantedOffer(userId, promotion.offerId, promotion.creditedAmount, promotion.createdAt))
     }
 
-  def listAllGrantedUsersForOffer(offerId: String): Seq[GrantedOffer] =
-    db.withSession { implicit session =>
-      promotionRepo.findAllUsersUsingOffer(offerId)
-        .map(promotion => new GrantedOffer(promotion.userId, offerId, promotion.creditedAmount, promotion.createdAt))
-    }
 }

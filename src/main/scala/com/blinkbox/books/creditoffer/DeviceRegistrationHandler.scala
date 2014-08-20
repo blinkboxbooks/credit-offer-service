@@ -74,7 +74,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
 
 object DeviceRegistrationHandler {
 
-  /** The fields used to recognise Hudl 2 registrations. */
+  /** The fields used to recognise Hudl 2 devices. */
   val Hudl2Brand = "Hudl"
   val Hudl2Model = "Hudl 2"
 

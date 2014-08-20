@@ -4,6 +4,9 @@ import org.joda.time.DateTime
 import scala.slick.driver.JdbcProfile
 import scala.slick.lifted.ProvenShape.proveShapeOf
 
+/**
+ * Schema definition for promotions table.
+ */
 trait PromotionTables extends JdbcSupport {
 
   import driver.simple._
@@ -13,18 +16,14 @@ trait PromotionTables extends JdbcSupport {
   implicit lazy val promotionIdColumnType = MappedColumnType.base[PromotionId, Int](_.value, PromotionId(_))
 
   class Promotions(tag: Tag) extends Table[Promotion](tag, "promotions") {
-    override def * = (id, userId, promotionId, createdAt, creditedAmount) <> ((Promotion.applyTuple _).tupled, Promotion.unapplyTuple)
 
     def id = column[PromotionId]("id", O.PrimaryKey, O.AutoInc, O.NotNull)
-
     def userId = column[Int]("user_id", O.NotNull)
-
     def promotionId = column[String]("promotion_id", O.NotNull)
-
     def createdAt = column[DateTime]("created_at", O.NotNull)
-
     def creditedAmount = column[BigDecimal]("credited_amount", O.NotNull)
-
+    
+    override def * = (id, userId, promotionId, createdAt, creditedAmount) <> ((Promotion.applyTuple _).tupled, Promotion.unapplyTuple)
   }
 
 }

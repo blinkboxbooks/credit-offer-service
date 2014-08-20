@@ -29,6 +29,7 @@ case class AccountCredit(amount: BigDecimal, currency: String) {
 object AccountCredit {
   def apply(amount: Money) = new AccountCredit(amount.getAmount, amount.getCurrencyUnit.getCurrencyCode)
 }
+
 case class AccountCreditReq(amount: BigDecimal, currency: String, reason: String)
 object AccountCreditReq {
   def apply(amount: Money, reason: String) = new AccountCreditReq(amount.getAmount, amount.getCurrencyUnit.getCurrencyCode, reason)
@@ -64,7 +65,7 @@ class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
 
   override def addCredit(userId: Int, amount: Money, authToken: String): Future[AccountCredit] = {
 
-    val credit = AccountCreditReq(amount, "customer") // TODO: use more specific reason
+    val credit = AccountCreditReq(amount, "customer") // Pre-defined value in admin account credit service.
     call(Post(s"$serviceUrl/admin/users/$userId/credit", credit), okPF, Some(authToken))
   }
 

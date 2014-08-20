@@ -17,6 +17,12 @@ import spray.httpx.marshalling.BasicMarshallers.FormDataMarshaller
 import scala.concurrent.duration._
 import scala.concurrent.Future
 
+//
+// Client API for auth service.
+//
+// NOTE: This should be replaced be a client library for the Auth service when that's available.
+//
+
 trait AuthService {
   def authenticate(userName: String, password: String): Future[AuthTokens]
   def authenticate(refreshToken: String): Future[AuthTokens]

@@ -3,6 +3,7 @@ package com.blinkbox.books.creditoffer.persistence
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime
 
+case class Promotion(id: PromotionId, userId: Int, offerId: String, createdAt: DateTime, creditedAmount: Money)
 
 object Promotion {
   def applyTuple(id: PromotionId,
@@ -18,8 +19,6 @@ object Promotion {
     Some((promotion.id, promotion.userId, promotion.offerId, promotion.createdAt, BigDecimal(promotion.creditedAmount.getAmount)))
   }
 }
-
-case class Promotion(id: PromotionId, userId: Int, offerId: String, createdAt: DateTime, creditedAmount: Money)
 
 case class PromotionId(value: Int) extends AnyVal
 

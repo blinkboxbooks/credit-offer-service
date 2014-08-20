@@ -4,6 +4,11 @@ import org.joda.time.{DateTime, DateTimeZone}
 import scala.slick.driver.JdbcProfile
 import scala.slick.profile._
 
+//
+// Common traits for database access with Slick.
+// NOTE: This should be replaced with a common DB library when this is available.
+//
+
 trait SlickSupport[Profile <: BasicProfile] {
   val driver: Profile
   type Session = Profile#Backend#Session

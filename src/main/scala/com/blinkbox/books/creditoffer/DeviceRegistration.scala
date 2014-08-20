@@ -37,7 +37,7 @@ case class DeviceDetails(id: Int, name: String, brand: String, model: String, os
 
 object DeviceDetails {
   def fromXML(device: Node): DeviceDetails =
-    if (device.size == 0) throw new IllegalArgumentException(s"Cannot parse device details from empty node")
+    if (device.size == 0) throw new IllegalArgumentException("Cannot parse device details from empty node")
     else DeviceDetails(
       device.stringValue("id").toInt,
       device.stringValue("name"),

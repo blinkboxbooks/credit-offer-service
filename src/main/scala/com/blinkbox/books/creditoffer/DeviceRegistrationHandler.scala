@@ -31,7 +31,6 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   import DeviceRegistrationHandler._
 
   override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] = {
-
     val deviceRegistration = DeviceRegistrationEvent.fromXML(event.body.content)
     val userId = deviceRegistration.userId
     if (!isHudl2(deviceRegistration.device))
@@ -48,10 +47,9 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     }
   }
 
-  @tailrec
-  final override def isTemporaryFailure(e: Throwable) =
+  override def isTemporaryFailure(e: Throwable) =
     e.isInstanceOf[IOException] || e.isInstanceOf[TimeoutException] || e.isInstanceOf[ConnectionException] ||
-      Option(e.getCause).isDefined && isTemporaryFailure(e.getCause)
+      Option(e.getCause).map(isTemporaryFailure).getOrElse(false)
 
   /** Decide if the given device registration is for a Hudl2. */
   private def isHudl2(device: DeviceDetails): Boolean = device.brand == Hudl2Brand && device.model == Hudl2Model

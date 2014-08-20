@@ -5,10 +5,16 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.blinkbox.books.clients.UnauthorizedException
-import com.typesafe.scalalogging.slf4j.StrictLogging
+import com.typesafe.scalalogging.Logging
 import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
+
+//
+// Client API for getting tokens from an Auth service.
+//
+// NOTE: This should be replaced with a client library for the Auth service, when this is available.
+//
 
 trait TokenProvider {
   def accessToken: Future[AccessToken]
@@ -22,6 +28,9 @@ case object RefreshAccessToken
 case class AccessToken(value: String) extends AnyVal
 
 
+/**
+ * Actor that keeps track of, and provides access to, auth tokens from an auth service.
+ */
 class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Actor with Stash with ActorLogging {
   import context.become
 
@@ -72,7 +81,7 @@ class ZuulTokenProvider(providerActor: ActorRef) extends TokenProvider {
 }
 
 trait AuthRetry {
-  this: StrictLogging =>
+  this: Logging =>
 
   val tokenProvider: TokenProvider
 

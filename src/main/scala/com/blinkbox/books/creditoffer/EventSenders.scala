@@ -31,7 +31,9 @@ object EventSender {
   val Originator = "credit-offer-service"
 }
 
-// Publish Email XML message to Mailer's exchange. 
+/**
+ * EventSender that publishes Email XML message to Mailer's exchange.
+ */  
 class MailerEventSender(delegate: ActorRef, templateName: String, routingId: String)(implicit ec: ExecutionContext, timeout: Timeout)
   extends EventSender with StrictLogging {
 
@@ -70,7 +72,9 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 
 }
 
-// Publish new-style JSON message to Agora header exchange.
+/**
+ * Publishes new-style JSON message to the shop's header exchange.
+ */
 class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender with StrictLogging {
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
@@ -82,7 +86,9 @@ class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: Ex
 
 }
 
-// Publish User.Credited JSON message to Agora header exchange.
+/**
+ * Publishes User.Credited JSON message to the shop's header exchange. 
+ */
 class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender
   with StrictLogging {
 

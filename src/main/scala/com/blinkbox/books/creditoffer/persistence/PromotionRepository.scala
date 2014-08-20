@@ -4,23 +4,23 @@ import org.joda.money.{CurrencyUnit, Money}
 import scala.slick.driver.JdbcProfile
 import scala.slick.profile.BasicProfile
 
+/**
+ * API for Promotion data in the database.
+ */
 trait PromotionRepository[Profile <: BasicProfile] extends SlickSupport[Profile] {
-  def findById(id: PromotionId)(implicit session: Session): Option[Promotion]
+  
   def findByUserIdAndOfferId(userId: Int, offerId: String)(implicit session: Session) : Option[Promotion]
   def findGrantedOffersForUser(userId: Int)(implicit session: Session): Seq[Promotion]
   def findAllUsersUsingOffer(offerId: String)(implicit session: Session) : Seq[Promotion]
   def list(implicit session: Session): List[Promotion]
   def insert(feature: Promotion)(implicit session: Session): Int
-  def update(feature: Promotion)(implicit session: Session): Int
   def delete(id: PromotionId)(implicit session: Session): Int
   def totalCreditedAmount()(implicit session: Session): Money
+  
 }
 
 trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with PromotionTables {
   import driver.simple._
-
-  override def findById(id: PromotionId)(implicit session: Session) =
-    promotions.filter(_.id === id).firstOption
 
   override def findByUserIdAndOfferId(userId: Int, offerId: String)(implicit session: Session) =
     promotions.filter(entry => entry.userId === userId && entry.promotionId === offerId).firstOption
@@ -36,9 +36,6 @@ trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with Prom
 
   override def insert(promotion: Promotion)(implicit session: Session) =
     promotions.insert(promotion)
-
-  override def update(promotion: Promotion)(implicit session: Session) =
-    promotions.filter(_.id === promotion.id).update(promotion)
 
   override def delete(id: PromotionId)(implicit session: Session) =
     promotions.filter(_.id === id).delete

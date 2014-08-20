@@ -101,24 +101,6 @@ with TestDatabaseComponent with TestRepositoriesComponent {
       o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
   }
 
-  it should "list all users under a single promotional offer" in {
-
-    val usersUsingFirstOffer = historyDao.listAllGrantedUsersForOffer(firstOffer)
-    usersUsingFirstOffer.size shouldBe 2
-    usersUsingFirstOffer.exists(
-      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-    usersUsingFirstOffer.exists(
-      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
-
-    val usersUsingSecondOffer = historyDao.listAllGrantedUsersForOffer(secondOffer)
-    usersUsingSecondOffer.size shouldBe 2
-    usersUsingSecondOffer.exists(
-      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-    usersUsingSecondOffer.exists(
-      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
-
-  }
-
   it should "not give a promotion when the Credit Limit has been reached " in {
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
     historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted

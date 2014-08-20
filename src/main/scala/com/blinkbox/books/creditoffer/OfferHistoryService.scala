@@ -28,22 +28,20 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   creditLimit: Money) extends OfferHistoryService with StrictLogging {
 
   def grant(userId: Int, offerId: String): Option[GrantedOffer] =
-    db.withSession { implicit session =>
-      session.withTransaction {
-        val newTotalCreditAmount = promotionRepo.totalCreditedAmount.plus(creditAmount)
-        // Check the offer has not been given beforehand and that adding it will not exceed the credit limits
-        val canOffer = !isGranted(userId, offerId) &&
-          (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
-        val grantResult = if (canOffer) {
-          val createdTime = DateTime.now(DateTimeZone.UTC)
-          promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
-          Some(GrantedOffer(userId, offerId, creditAmount, createdTime))
-        } else {
-          None
-        }
-        logger.info(s"Granted offer $offerId for user with id $userId: ${grantResult.nonEmpty}")
-        grantResult
+    db.withTransaction { implicit session =>
+      val newTotalCreditAmount = promotionRepo.totalCreditedAmount.plus(creditAmount)
+      // Check the offer has not been given beforehand and that adding it will not exceed the credit limits
+      val canOffer = !isGranted(userId, offerId) &&
+        (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
+      val grantResult = if (canOffer) {
+        val createdTime = DateTime.now(DateTimeZone.UTC)
+        promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
+        Some(GrantedOffer(userId, offerId, creditAmount, createdTime))
+      } else {
+        None
       }
+      logger.info(s"Granted offer $offerId for user with id $userId: ${grantResult.nonEmpty}")
+      grantResult
     }
 
   def isGranted(userId: Int, offerId: String): Boolean =

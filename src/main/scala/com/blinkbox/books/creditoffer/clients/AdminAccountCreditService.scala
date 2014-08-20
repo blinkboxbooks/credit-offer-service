@@ -97,8 +97,10 @@ class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvid
 
   import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
 
-  def addCredit(userId: Int, amount: Money): Future[AccountCredit] =
+  def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
+    logger.info(s"Adding credit ($amount) for user $userId")
     withAuthRetry(super.addCredit(userId, amount, _))
+  }
 }
 
 object RetryingAdminAccountCreditServiceClient {

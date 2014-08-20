@@ -11,6 +11,7 @@ import org.scalatest.concurrent.{ AsyncAssertions, ScalaFutures }
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.time.{ Millis, Seconds, Span }
+import spray.http.HttpHeaders.RawHeader
 import spray.http._
 import spray.http.ContentTypes.`application/json`
 import scala.concurrent.duration._
@@ -42,9 +43,10 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
       case Failure(e) => w(throw e); w.dismiss()
     }
 
-    intercept[ThrottledException] {
+    val ex = intercept[ThrottledException] {
       w.await
     }
+    assert(ex.message == "Retry after 20s")
   }
 
   test("Authenticate with refresh token") {
@@ -90,7 +92,8 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
     override def sendAndReceive(implicit refFactory: ActorRefFactory,
       executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
       (req: HttpRequest) =>
-        Future.successful(HttpResponse(StatusCodes.TooManyRequests, HttpEntity(`application/json`, resp)))
+        Future.successful(HttpResponse(StatusCodes.TooManyRequests, HttpEntity(`application/json`, resp))
+                          .withHeaders(RawHeader("Retry-After", "20")))
     }
   }
 

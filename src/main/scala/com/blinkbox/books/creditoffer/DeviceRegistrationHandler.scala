@@ -7,7 +7,6 @@ import com.blinkbox.books.schemas.events.user.v2.{User, UserId}
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import java.io.IOException
 import java.util.concurrent.TimeoutException
-import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
@@ -34,10 +33,11 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   override def handleEvent(event: Event, originalSender: ActorRef): Future[Unit] = {
 
     val deviceRegistration = DeviceRegistrationEvent.fromXML(event.body.content)
-    val userId = deviceRegistration.userId;
+    val userId = deviceRegistration.userId
     if (!isHudl2(deviceRegistration.device))
       Future.successful(())
-    else
+    else {
+      logger.info(s"Handling Hudl2 registration event. User id: $userId, device id: ${deviceRegistration.device.id}")
       for (
         userProfile <- userService.userProfile(userId);
         grantedOption <- Future(offerDao.grant(userId, offerCode));
@@ -45,6 +45,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
         creditedAmountOption = creditedOption.map(_.asMoney);
         _ = sendIfCredited(creditedAmountOption, grantedOption, UserId(userId), userProfile, offerCode)
       ) yield ()
+    }
   }
 
   @tailrec
@@ -57,7 +58,9 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
 
   private def optionallyCredit(userId: Int, granted: Option[GrantedOffer]): Future[Option[AccountCredit]] = granted match {
     case Some(grant) => accountCreditService.addCredit(userId, grant.creditedAmount).map(res => Some(res))
-    case None => Future.successful(None)
+    case None =>
+      logger.info(s"User with id $userId has been granted the offer already")
+      Future.successful(None)
   }
 
   private def sendIfCredited(creditAmount: Option[Money], granted: Option[GrantedOffer], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] =

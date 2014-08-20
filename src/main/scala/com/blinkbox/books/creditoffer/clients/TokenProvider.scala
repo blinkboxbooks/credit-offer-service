@@ -1,10 +1,11 @@
 package com.blinkbox.books.creditoffer.clients
 
-import akka.actor.{ActorRef, Stash, Actor}
+import akka.actor.{ActorLogging, ActorRef, Stash, Actor}
 import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.blinkbox.books.clients.UnauthorizedException
+import com.typesafe.scalalogging.slf4j.StrictLogging
 import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,7 +22,7 @@ case object RefreshAccessToken
 case class AccessToken(value: String) extends AnyVal
 
 
-class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Actor with Stash {
+class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Actor with Stash with ActorLogging {
   import context.become
 
   implicit val ec = context.dispatcher // TODO: consider which futures need to run where.
@@ -50,6 +51,7 @@ class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Act
     case GetAccessToken => stash()
     case RefreshAccessToken => stash()
     case newTokens: AuthTokens =>
+      log.debug(s"Got new tokens: $newTokens")
       authTokens = Some(newTokens)
       sender ! AccessToken(newTokens.access_token)
       unstashAll()
@@ -70,13 +72,16 @@ class ZuulTokenProvider(providerActor: ActorRef) extends TokenProvider {
 }
 
 trait AuthRetry {
+  this: StrictLogging =>
 
   val tokenProvider: TokenProvider
 
   // TODO: Add tests for this
   def withAuthRetry[T](f: (String) => Future[T])(implicit ec: ExecutionContext): Future[T] = {
     tokenProvider.accessToken.flatMap(accessToken => f(accessToken.value)) recoverWith {
-      case ex: UnauthorizedException => tokenProvider.refreshedAccessToken.flatMap(accessToken => f(accessToken.value))
+      case ex: UnauthorizedException =>
+        logger.info("Access token is invalid, getting a refreshed token and trying again...")
+        tokenProvider.refreshedAccessToken.flatMap(accessToken => f(accessToken.value))
     }
   }
 }

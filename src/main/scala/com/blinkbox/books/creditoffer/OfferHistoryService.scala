@@ -1,6 +1,7 @@
 package com.blinkbox.books.creditoffer
 
 import com.blinkbox.books.creditoffer.persistence._
+import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.joda.money.Money
 import org.joda.time.{DateTimeZone, DateTime}
 
@@ -26,7 +27,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
   db: DbTypes#Database,
   promotionRepo: PromotionRepository[DbTypes#Profile],
   creditAmount: Money,
-  creditLimit: Money) extends OfferHistoryService {
+  creditLimit: Money) extends OfferHistoryService with StrictLogging {
 
   def grant(userId: Int, offerId: String): Option[GrantedOffer] =
     db.withSession { implicit session =>
@@ -35,13 +36,15 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         // Check the offer has not been given beforehand and that adding it will not exceed the credit limits
         val canOffer = !isGranted(userId, offerId) &&
           (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
-        if (canOffer) {
+        val grantResult = if (canOffer) {
           val createdTime = DateTime.now(DateTimeZone.UTC)
           promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
           Some(GrantedOffer(userId, offerId, creditAmount, createdTime))
         } else {
           None
         }
+        logger.info(s"Granted offer $offerId for user with id $userId: ${grantResult.nonEmpty}")
+        grantResult
       }
     }
 

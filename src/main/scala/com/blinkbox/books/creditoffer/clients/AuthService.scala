@@ -61,7 +61,9 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
 
   private def authTokensResponseHandler: PartialFunction[HttpResponse, AuthTokens] = {
     case resp if resp.status == OK => unmarshal(json4sUnmarshaller[AuthTokens])(resp.entity)
-    case resp if resp.status == TooManyRequests => throw ThrottledException(resp.entity.data.asString) // TODO: include Retry-After header info
+    case resp if resp.status == TooManyRequests =>
+      val retryInterval = resp.headers.find(_.is("retry-after")).map(_.value)
+      throw ThrottledException(retryInterval.fold("")(seconds => s"Retry after ${seconds}s"))
   }
 }
 
@@ -75,7 +77,10 @@ class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: 
 
   import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
 
-  override def userProfile(userId: Int): Future[UserProfile] = withAuthRetry(super.userProfile(userId, _))
+  override def userProfile(userId: Int): Future[UserProfile] = {
+    logger.info(s"Retrieving user details for user with id: $userId")
+    withAuthRetry(super.userProfile(userId, _))
+  }
 }
 
 object RetryingUserServiceClient {
@@ -85,13 +90,11 @@ object RetryingUserServiceClient {
 
 case class ThrottledException(message: String, cause: Throwable = null) extends Exception(message, cause)
 
-case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration, username: String, password: String)
+case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration)
 
 object AuthServiceClientConfig {
   def apply(config: Config): AuthServiceClientConfig = AuthServiceClientConfig(
     config.getHttpUrl("service.auth.api.public.internalUrl"),
-    config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis,
-    config.getString("service.auth.api.public.username"),
-    config.getString("service.auth.api.public.password"))
+    config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis)
 }
 

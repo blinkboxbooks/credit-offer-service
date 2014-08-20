@@ -36,7 +36,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     val userId = deviceRegistration.userId
     if (!isHudl2(deviceRegistration.device))
       Future.successful(())
-    else
+    else {
       logger.info(s"Handling Hudl2 registration event. User id: $userId, device id: ${deviceRegistration.device.id}")
       for (
         userProfile <- userService.userProfile(userId);
@@ -45,6 +45,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
         creditedAmountOption = creditedOption.map(_.asMoney);
         _ = sendIfCredited(creditedAmountOption, grantedOption, UserId(userId), userProfile, offerCode)
       ) yield ()
+    }
   }
 
   @tailrec

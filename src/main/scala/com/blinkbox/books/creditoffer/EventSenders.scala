@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.blinkbox.books.messaging.Event
 import com.blinkbox.books.messaging.EventHeader
+import com.blinkbox.books.schemas.actions.email
 import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.User.Credited
 import com.typesafe.scalalogging.slf4j.StrictLogging
@@ -74,32 +75,12 @@ class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: Ex
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val attributes = Map("firstName" -> user.firstName, "lastName" -> user.lastName)
-    val emailTrigger = Email.Send(timestamp, Email.User(user.username, user.id.value.toString), templateName, attributes)
+    val emailTrigger = email.v2.Email.Send(timestamp, email.v2.User(email.v2.UserId(user.id.value), user.username), templateName, attributes)
     logger.info(s"Sending credit event for ExactTarget: $emailTrigger")
     delegate ! Event.json(EventHeader(EventSender.Originator), emailTrigger)
   }
 
 }
-
-// -------------- TODO - TEMPORARY: replace this with actual message schemas when available.
-object Email {
-  import com.blinkbox.books.messaging._
-
-  case class User(emailAddress: String, id: String)
-  case class Send(timestamp: DateTime, to: User, emailTemplateName: String, attributes: Map[String, String])
-
-  implicit object Send extends JsonEventBody[Send] {
-    val jsonMediaType = MediaType("application/vnd.blinkbox.books.events.email.send.v2+json")
-    def unapply(body: EventBody): Option[(DateTime, User, String, Map[String, String])] =
-      JsonEventBody.unapply[Send](body).flatMap(Send.unapply)
-  }
-
-  implicit object User extends JsonEventBody[User] {
-    val jsonMediaType = MediaType("application/vnd.blinkbox.books.events.email.common.v2+json")
-    def unapply(body: EventBody): Option[Any] = JsonEventBody.unapply[User](body).flatMap(User.unapply)
-  }
-}
-// --------------
 
 // Publish User.Credited JSON message to Agora header exchange.
 class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, timeout: Timeout) extends EventSender

@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.{ TestKit, TestProbe, ImplicitSender }
 import akka.util.Timeout
 import com.blinkbox.books.messaging.Event
+import com.blinkbox.books.schemas.actions.email.{v2 => email}
 import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.UserId
 import org.joda.money.Money
@@ -80,10 +81,10 @@ class EventSendersTest extends FlatSpec with MockitoSugar {
     val published = publisher.expectMsgType[Event](3.seconds)
 
     published.body match {
-      case Email.Send(timestamp, recipient, templateName, attributes) =>
+      case email.Email.Send(timestamp, recipient, templateName, attributes) =>
         (timestamp, recipient, templateName, attributes)
-        assert(recipient.emailAddress == user.username &&
-          recipient.id == user.id.value.toString &&
+        assert(recipient.username == user.username &&
+          recipient.id.value == user.id.value &&
           templateName == testTemplate)
         assert(attributes == Map("firstName" -> user.firstName, "lastName" -> user.lastName))
     }

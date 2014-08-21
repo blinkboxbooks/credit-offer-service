@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import org.json4s.{DefaultFormats, Formats}
-import spray.http.{FormData, HttpResponse}
+import spray.http._
 import spray.http.MediaTypes.`application/x-www-form-urlencoded`
 import spray.http.StatusCodes._
 import spray.httpx.Json4sJacksonSupport

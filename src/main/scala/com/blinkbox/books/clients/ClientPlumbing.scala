@@ -22,7 +22,7 @@ trait ClientPlumbing extends StrictLogging {
   this: SendAndReceive =>
 
   protected implicit val system: ActorSystem
-  import system.dispatcher
+  protected implicit lazy val executionContext = system.dispatcher
 
   protected val timeout: Timeout
 

@@ -18,7 +18,6 @@ import spray.http.{ HttpEntity, HttpResponse }
 import spray.http.StatusCodes._
 import spray.httpx.RequestBuilding.Post
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
@@ -95,8 +94,6 @@ object AdminAccountCreditServiceClient {
 class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvider, cfg: AdminAccountCreditClientConfig)
   extends AdminAccountCreditServiceClient(cfg) with AccountCreditService with AuthRetry {
   this: SendAndReceive =>
-
-  import scala.concurrent.ExecutionContext.Implicits.global // TODO: review this
 
   def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
     logger.info(s"Adding credit ($amount) for user $userId")

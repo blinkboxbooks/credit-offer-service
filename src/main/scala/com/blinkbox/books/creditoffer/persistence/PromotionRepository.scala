@@ -40,9 +40,8 @@ trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with Prom
   override def delete(id: PromotionId)(implicit session: Session) =
     promotions.filter(_.id === id).delete
 
-  override def totalCreditedAmount()(implicit session: Session): Money = {
+  override def totalCreditedAmount()(implicit session: Session): Money =
     Money.of(CurrencyUnit.of("GBP"), sumOfTotalCreditedAmount.bigDecimal)
-  }
 
   def sumOfTotalCreditedAmount()(implicit session: Session): BigDecimal = {
     promotions.map(_.creditedAmount).sum.run match {

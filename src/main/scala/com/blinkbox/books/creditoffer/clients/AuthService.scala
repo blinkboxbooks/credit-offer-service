@@ -56,7 +56,6 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
     call(Post(s"${cfg.url}/oauth2/token", FormData(reqData))(FormDataMarshaller), authTokensResponseHandler)
   }
 
-
   override def userProfile(userId: Int, authToken: String): Future[UserProfile] = {
     call(Get(s"${cfg.url}/admin/users/$userId"), userProfileResponseHandler, Some(authToken))
   }
@@ -101,4 +100,3 @@ object AuthServiceClientConfig {
     config.getHttpUrl("service.auth.api.public.internalUrl"),
     config.getDuration("service.auth.api.public.timeout", TimeUnit.MILLISECONDS).millis)
 }
-

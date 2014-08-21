@@ -1,8 +1,6 @@
 package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorRefFactory
-import akka.util.Timeout
-import akka.util.Timeout.durationToTimeout
 import com.blinkbox.books.clients.SendAndReceive
 import com.blinkbox.books.config.Configuration
 import org.junit.runner.RunWith
@@ -14,7 +12,6 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import spray.http.HttpHeaders.RawHeader
 import spray.http._
 import spray.http.ContentTypes.`application/json`
-import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{ Failure, Success }

@@ -77,8 +77,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
       |"user_first_name":"credit-offer",
       |"user_last_name":"service"}""".stripMargin
 
-    override def sendAndReceive(implicit refFactory: ActorRefFactory,
-      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+    override def sendAndReceive(implicit refFactory: ActorRefFactory, executionContext: ExecutionContext) = {
       (req: HttpRequest) => Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
     }
   }
@@ -89,8 +88,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
                |  "message": "Too many requests"
                |}""".stripMargin
 
-    override def sendAndReceive(implicit refFactory: ActorRefFactory,
-      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+    override def sendAndReceive(implicit refFactory: ActorRefFactory, executionContext: ExecutionContext) = {
       (req: HttpRequest) =>
         Future.successful(HttpResponse(StatusCodes.TooManyRequests, HttpEntity(`application/json`, resp))
                           .withHeaders(RawHeader("Retry-After", "20")))
@@ -109,8 +107,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
       |"user_previous_usernames":[]
       |}""".stripMargin
 
-    override def sendAndReceive(implicit refFactory: ActorRefFactory,
-      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+    override def sendAndReceive(implicit refFactory: ActorRefFactory, executionContext: ExecutionContext) = {
       (req: HttpRequest) =>
         Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
     }

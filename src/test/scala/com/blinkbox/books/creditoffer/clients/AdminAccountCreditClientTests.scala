@@ -35,13 +35,11 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
   }
 
   trait OkSendReceiveMock extends SendAndReceive {
-    import scala.concurrent.duration._
 
     MediaTypes.register(`application/vnd.blinkboxbooks.data.v1+json`)
     val resp = """{"type":"urn:blinkboxbooks:schema:admin:credit","amount":"10.00","currency":"GBP"}""".stripMargin
 
-    override def sendAndReceive(implicit refFactory: ActorRefFactory,
-      executionContext: ExecutionContext, futureTimeout: Timeout = 60.seconds) = {
+    override def sendAndReceive(implicit refFactory: ActorRefFactory, executionContext: ExecutionContext) = {
       (req: HttpRequest) =>
         {
           val response = HttpResponse(StatusCodes.OK, HttpEntity(`application/vnd.blinkboxbooks.data.v1+json`, resp))

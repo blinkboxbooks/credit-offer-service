@@ -78,8 +78,7 @@ trait ClientPlumbing extends StrictLogging {
 }
 
 trait SendAndReceive {
-  def sendAndReceive(implicit refFactory: ActorRefFactory, executionContext: ExecutionContext,
-                     futureTimeout: Timeout = 60.seconds) = sendReceive
+  def sendAndReceive(implicit refFactory: ActorRefFactory, ec: ExecutionContext): SendReceive = sendReceive(refFactory, ec)
 }
 
 case class UnmarshallingException(message: String, cause: Throwable = null) extends Exception(message, cause)

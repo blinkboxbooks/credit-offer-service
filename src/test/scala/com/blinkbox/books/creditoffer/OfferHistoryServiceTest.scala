@@ -35,7 +35,7 @@ with TestDatabaseComponent with TestRepositoriesComponent {
 
   def resetDatabase() = {
     db.withSession { implicit session =>
-      tables.promotions.mutate(_.delete)
+      tables.promotions.mutate(_.delete())
     }
   }
 

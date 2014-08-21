@@ -18,6 +18,7 @@ trait DatabaseTypes {
   type Profile <: BasicProfile
   type ConstraintException <: Throwable
   type Database = Profile#Backend#Database
+  type Session = Profile#Backend#Session
   lazy implicit val constraintExceptionTag: ClassTag[ConstraintException] = classTag[ConstraintException]
 }
 

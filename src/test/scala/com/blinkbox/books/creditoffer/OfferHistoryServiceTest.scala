@@ -75,14 +75,16 @@ with TestDatabaseComponent with TestRepositoriesComponent {
 
   it should "find out if a user has been granted an offer correctly" in {
     // Check all the offers we have return true
-    historyDao.isGranted(firstUserId, firstOffer) shouldBe true
-    historyDao.isGranted(firstUserId, secondOffer) shouldBe true
-    historyDao.isGranted(secondUserId, firstOffer) shouldBe true
-    historyDao.isGranted(secondUserId, secondOffer) shouldBe true
+    db.withSession { implicit session =>
+      historyDao.isGranted(firstUserId, firstOffer) shouldBe true
+      historyDao.isGranted(firstUserId, secondOffer) shouldBe true
+      historyDao.isGranted(secondUserId, firstOffer) shouldBe true
+      historyDao.isGranted(secondUserId, secondOffer) shouldBe true
 
-    // Check that no other offers are returned true
-    historyDao.isGranted(firstUserId, "unknown_offer") shouldBe false
-    historyDao.isGranted(10, firstOffer) shouldBe false
+      // Check that no other offers are returned true
+      historyDao.isGranted(firstUserId, "unknown_offer") shouldBe false
+      historyDao.isGranted(10, firstOffer) shouldBe false
+    }
   }
 
   it should "list all offers granted to a single user correctly" in {
@@ -103,7 +105,9 @@ with TestDatabaseComponent with TestRepositoriesComponent {
 
   it should "not give a promotion when the Credit Limit has been reached " in {
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
-    historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    db.withSession { implicit session =>
+      historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    }
     historyDao.grant(firstUserId, newOffer) shouldBe None
     val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
 
@@ -121,7 +125,9 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     populateDatabase
 
     // Make sure that the offer has already been granted before attempting to grant it again
-    historyDao.isGranted(firstUserId, firstOffer) shouldBe true
+    db.withSession { implicit session =>
+      historyDao.isGranted(firstUserId, firstOffer) shouldBe true
+    }
     historyDao.grant(firstUserId, firstOffer) shouldBe None
 
     // Make sure that the offer did not get written twice into the database by accident
@@ -137,7 +143,9 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     populateDatabase
 
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
-    historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    db.withSession { implicit session =>
+      historyDao.isGranted(firstUserId, newOffer) shouldBe false // Make sure the offer has not been granted
+    }
     val granted = historyDao.grant(firstUserId, newOffer)
     granted.get.userId shouldBe firstUserId
     granted.get.offerId shouldBe newOffer

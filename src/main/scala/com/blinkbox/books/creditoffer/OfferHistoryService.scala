@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.joda.money.Money
 import org.joda.time.{DateTimeZone, DateTime}
 
+
 /**
  * Interface for accessing persistently stored data about offers that have been
  * granted to users.
@@ -12,8 +13,6 @@ import org.joda.time.{DateTimeZone, DateTime}
 trait OfferHistoryService {
 
   def grant(userId: Int, offerId: String): Option[GrantedOffer]
-
-  def isGranted(userId: Int, offerId: String): Boolean
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer]
 
@@ -44,8 +43,8 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
       grantResult
     }
 
-  def isGranted(userId: Int, offerId: String): Boolean =
-    db.withSession(implicit session => promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined)
+  def isGranted(userId: Int, offerId: String)(implicit session: DbTypes#Session): Boolean =
+    promotionRepo.findByUserIdAndOfferId(userId, offerId).isDefined
 
   def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer] =
     db.withSession { implicit session =>

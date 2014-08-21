@@ -31,6 +31,15 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
     }
   }
 
+  test("Authenticate with password having unicode characters") {
+    import spray.util._
+    import AuthServiceClient.FormDataMarshaller
+
+    val formData = FormData(Map("unicode" -> "中国扬声器可以阅读本"))
+    val result = spray.httpx.marshalling.marshal(formData)
+    assert(result.get.asString == "unicode=%E4%B8%AD%E5%9B%BD%E6%89%AC%E5%A3%B0%E5%99%A8%E5%8F%AF%E4%BB%A5%E9%98%85%E8%AF%BB%E6%9C%AC")
+  }
+
   test("Throws ThrottledException when Auth server returns '429 Too Many Requests'") {
     val client = new AuthServiceClient(AuthServiceClientConfig(config)) with ThrottledSendReceiveMock
     val w = new Waiter

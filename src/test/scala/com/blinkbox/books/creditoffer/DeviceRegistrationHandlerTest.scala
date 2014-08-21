@@ -6,22 +6,21 @@ import com.blinkbox.books.clients._
 import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.messaging._
 import com.blinkbox.books.schemas.events.user.v2
+import com.blinkbox.books.test.MockitoSyrup
 import java.io.IOException
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
-import org.mockito.Matchers.{ eq => eql }
 import org.mockito.Mockito._
 import org.scalatest.{ BeforeAndAfter, FlatSpecLike, StreamlinedXmlEquality }
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.mock.MockitoSugar
 import scala.concurrent.duration._
 import scala.concurrent.Future
 
 @RunWith(classOf[JUnitRunner])
 class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) with ImplicitSender
-  with FlatSpecLike with BeforeAndAfter with MockitoSugar with StreamlinedXmlEquality {
+  with FlatSpecLike with BeforeAndAfter with MockitoSyrup with StreamlinedXmlEquality {
 
   val user1 = 101
   val user2 = 102

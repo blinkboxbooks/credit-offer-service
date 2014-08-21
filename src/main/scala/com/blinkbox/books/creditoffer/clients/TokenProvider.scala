@@ -1,5 +1,6 @@
 package com.blinkbox.books.creditoffer.clients
 
+import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Stash, Actor}
 import akka.pattern.ask
 import akka.pattern.pipe
@@ -65,8 +66,8 @@ class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Act
       sender ! AccessToken(newTokens.access_token)
       unstashAll()
       become(serveAuthTokens)
-    case akka.actor.Status.Failure(ex) =>
-      sender ! ex
+    case failure: Failure =>
+      sender ! failure
       unstashAll()
       become(serveAuthTokens)
   }

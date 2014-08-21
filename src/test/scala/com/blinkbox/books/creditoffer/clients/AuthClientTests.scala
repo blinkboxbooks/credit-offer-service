@@ -1,8 +1,6 @@
 package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorRefFactory
-import akka.util.Timeout
-import akka.util.Timeout.durationToTimeout
 import com.blinkbox.books.clients.SendAndReceive
 import com.blinkbox.books.config.Configuration
 import org.junit.runner.RunWith
@@ -14,7 +12,6 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import spray.http.HttpHeaders.RawHeader
 import spray.http._
 import spray.http.ContentTypes.`application/json`
-import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{ Failure, Success }
@@ -32,6 +29,15 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
     whenReady(client.authenticate("someuser", "somepassword")) { result =>
       assert(result == AuthTokens("someaccesstoken", "somerefreshtoken"))
     }
+  }
+
+  test("Authenticate with password having unicode characters") {
+    import spray.util._
+    import AuthServiceClient.FormDataMarshaller
+
+    val formData = FormData(Map("unicode" -> "中国扬声器可以阅读本"))
+    val result = spray.httpx.marshalling.marshal(formData)
+    assert(result.get.asString == "unicode=%E4%B8%AD%E5%9B%BD%E6%89%AC%E5%A3%B0%E5%99%A8%E5%8F%AF%E4%BB%A5%E9%98%85%E8%AF%BB%E6%9C%AC")
   }
 
   test("Throws ThrottledException when Auth server returns '429 Too Many Requests'") {

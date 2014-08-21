@@ -5,8 +5,7 @@ import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
-
+import org.scalatest.{Matchers, BeforeAndAfter, FlatSpec}
 import scala.slick.jdbc.meta.MTable._
 
 @RunWith(classOf[JUnitRunner])
@@ -15,14 +14,14 @@ with TestDatabaseComponent with TestRepositoriesComponent {
 
   import tables.driver.simple._
 
+  var testDatabase : tables.driver.backend.Database = _
+  var historyDao : DefaultOfferHistoryService[TestDatabaseTypes] = _
   val firstOffer = "promotion_1"
   val secondOffer = "promotion_2"
   val firstUserId = 1
   val secondUserId = 2
   val creditedAmount = Money.of(CurrencyUnit.of("GBP"), 20.0f)
   val creditLimit = Money.of(CurrencyUnit.of("GBP"), 90.0f)
-  var testDatabase: tables.driver.backend.Database = _
-  var historyDao: DefaultOfferHistoryService[TestDatabaseTypes] = _
 
   def populateDatabase = {
     // Two different users and two different offers

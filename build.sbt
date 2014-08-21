@@ -14,7 +14,7 @@ val dependencySettings = Seq(
     Seq(
     "com.blinkbox.books"        %%         "common-config"          % "1.0.1",
     "com.blinkbox.books"        %%         "common-messaging"       % "1.1.1",
-    "com.blinkbox.books"        %%         "common-scala-test"      % "0.2.1"                   % "test",
+    "com.blinkbox.books"        %%         "common-scala-test"      % "0.2.2"                   % "test",
     "com.blinkbox.books"        %%         "common-spray"           % "0.14.1",
     "com.blinkbox.books.hermes" %%         "rabbitmq-ha"            % "6.0.2",
     "com.blinkbox.books.hermes" %%         "message-schemas"        % "0.6.0",

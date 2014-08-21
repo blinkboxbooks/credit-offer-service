@@ -82,22 +82,6 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     }
   }
 
-  it should "list all offers granted to a single user correctly" in {
-    val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
-    offersOfFirstUser.size shouldBe 2
-    offersOfFirstUser.exists(
-      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-    offersOfFirstUser.exists(
-      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-
-    val offersOfSecondUser = historyDao.listGrantedOffersForUser(secondUserId)
-    offersOfSecondUser.size shouldBe 2
-    offersOfSecondUser.exists(
-      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
-    offersOfSecondUser.exists(
-      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
-  }
-
   it should "not give a promotion when the Credit Limit has been reached " in {
     val newOffer = "Super Duper Mighty Morphin Offer Time!"
     db.withSession { implicit session =>

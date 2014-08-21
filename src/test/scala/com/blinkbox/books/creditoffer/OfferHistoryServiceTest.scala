@@ -33,11 +33,7 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     }
   }
 
-  def resetDatabase() = {
-    db.withSession { implicit session =>
-      tables.promotions.mutate(_.delete)
-    }
-  }
+  def resetDatabase() = db.withSession { implicit session => tables.promotions.mutate(_.delete) }
 
   before {
     historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, creditLimit)

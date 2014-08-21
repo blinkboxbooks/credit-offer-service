@@ -40,7 +40,6 @@ with TestDatabaseComponent with TestRepositoriesComponent {
   }
 
   before {
-
     historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, creditLimit)
     populateDatabase
   }

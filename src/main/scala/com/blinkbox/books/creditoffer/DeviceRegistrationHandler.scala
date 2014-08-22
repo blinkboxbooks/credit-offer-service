@@ -9,7 +9,6 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 import java.io.IOException
 import java.util.concurrent.TimeoutException
 import org.joda.money.Money
-import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 
@@ -49,7 +48,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
 
   override def isTemporaryFailure(e: Throwable) =
     e.isInstanceOf[IOException] || e.isInstanceOf[TimeoutException] || e.isInstanceOf[ConnectionException] ||
-      Option(e.getCause).map(isTemporaryFailure).getOrElse(false)
+      Option(e.getCause).exists(isTemporaryFailure)
 
   /** Decide if the given device registration is for a Hudl2. */
   private def isHudl2(device: DeviceDetails): Boolean = device.brand == Hudl2Brand && device.model == Hudl2Model

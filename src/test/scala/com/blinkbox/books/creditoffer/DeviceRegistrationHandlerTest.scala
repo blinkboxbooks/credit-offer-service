@@ -131,7 +131,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
   it should "recover from temporary failure when checking current user's credit" in new TestFixture {
     when(accountCreditService.currentCredit(user1))
-      .thenReturn(Future.failed(ConnectionAttemptFailedException("test attempt", null)))
+      .thenReturn(Future.failed(ConnectionAttemptFailedException("test attempt")))
       .thenReturn(Future.successful(AccountCreditList(List(AccountCredit(offerAmount)))))
 
     handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)

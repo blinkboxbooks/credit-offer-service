@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.3 ([#27](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/27) 2014-08-22 16:01:22)
+
+Admin account credit service check
+
+### Improvement
+
+- `DeviceRegistrationHandler` retrieves user's account credit balance before granting an offer and retries processing the event if that operation fails.
+
 ## 0.1.2 ([#26](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/26) 2014-08-22 15:07:07)
 
 Update RabbitMQ library

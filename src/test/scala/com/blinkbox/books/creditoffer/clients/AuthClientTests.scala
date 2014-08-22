@@ -1,7 +1,7 @@
 package com.blinkbox.books.creditoffer.clients
 
 import akka.actor.ActorRefFactory
-import com.blinkbox.books.clients.SendAndReceive
+import com.blinkbox.books.clients.{ThrottledException, SendAndReceive}
 import com.blinkbox.books.config.Configuration
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite

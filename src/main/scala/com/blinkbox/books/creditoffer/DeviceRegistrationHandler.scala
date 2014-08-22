@@ -1,6 +1,7 @@
 package com.blinkbox.books.creditoffer
 
 import akka.actor.ActorRef
+import com.blinkbox.books.clients.ConnectionException
 import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.messaging._
 import com.blinkbox.books.schemas.events.user.v2.{User, UserId}
@@ -11,7 +12,6 @@ import org.joda.money.Money
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
-import spray.can.Http.ConnectionException
 
 /**
  * Actor that processes device registrations.

@@ -100,8 +100,6 @@ object RetryingUserServiceClient {
     new RetryingUserServiceClient(tokenProvider, cfg) with SendAndReceive
 }
 
-case class ThrottledException(message: String, cause: Throwable = null) extends Exception(message, cause)
-
 case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration)
 
 object AuthServiceClientConfig {

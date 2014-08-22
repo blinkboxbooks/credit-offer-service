@@ -5,7 +5,6 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.StrictLogging
-import scala.concurrent.duration._
 import spray.can.Http
 import spray.client.pipelining._
 import spray.http.StatusCodes._
@@ -81,10 +80,14 @@ trait SendAndReceive {
   def sendAndReceive(implicit refFactory: ActorRefFactory, ec: ExecutionContext): SendReceive = sendReceive(refFactory, ec)
 }
 
-case class UnmarshallingException(message: String, cause: Throwable = null) extends Exception(message, cause)
+class ConnectionException(message: String, cause: Throwable = null) extends Exception(message, cause)
+
+case class ConnectionAttemptFailedException(message: String, cause: Throwable = null) extends ConnectionException(message, cause)
+case class RequestTimeoutException(message: String, cause: Throwable = null) extends ConnectionException(message, cause)
+case class ThrottledException(message: String, cause: Throwable = null) extends ConnectionException(message, cause)
+
 case class NotFoundException(message: String, cause: Throwable = null) extends Exception(message, cause)
-case class ConnectionAttemptFailedException(message: String, cause: Throwable = null) extends Exception(message, cause)
-case class RequestTimeoutException(message: String, cause: Throwable = null) extends Exception(message, cause)
+case class UnmarshallingException(message: String, cause: Throwable = null) extends Exception(message, cause)
 case class UnauthorizedException(message: String, challengeParams: Map[String, String], cause: Throwable = null) extends Exception(message, cause)
 case class ServiceErrorException(message: String, cause: Throwable = null) extends Exception(message, cause)
 case class UnsupportedResponseException(message: String, cause: Throwable = null) extends Exception(message, cause)

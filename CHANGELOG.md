@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.1 ([#25](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/25) 2014-08-22 13:30:20)
+
+Bugfix: retry processing the event when experiencing connectivity issues
+
+### Bugfix
+
+- `isTemporaryFailure()` now checks correct type of `ConnectionException`.
+
 ## 0.1.0 ([#22](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/22) 2014-08-20 15:48:03)
 
 First version of Hudl 2 credit offer service

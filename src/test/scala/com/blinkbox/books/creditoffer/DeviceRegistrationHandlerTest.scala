@@ -8,8 +8,8 @@ import com.blinkbox.books.messaging._
 import com.blinkbox.books.schemas.events.user.v2
 import com.blinkbox.books.test.MockitoSyrup
 import java.io.IOException
-import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.{ DateTime, DateTimeZone }
+import org.joda.money.Money
+import org.joda.time.DateTime
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -129,6 +129,18 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     checkNoFailures()
   }
 
+  it should "recover from temporary failure when checking current user's credit" in new TestFixture {
+    when(accountCreditService.currentCredit(user1))
+      .thenReturn(Future.failed(ConnectionAttemptFailedException("test attempt")))
+      .thenReturn(Future.successful(AccountCreditList(List(AccountCredit(offerAmount)))))
+
+    handler ! deviceRegistrationEvent(user1, deviceMatchesOffer = true)
+    expectMsgType[Status.Success]
+
+    checkSuccessfulResult(user1)
+    checkNoFailures()
+  }
+
   it should "recover from a temporary failure when giving credit to user" in new TestFixture {
     // It should, but it can't, due to the lack of transactionality on the admin credit account API.
   }
@@ -171,6 +183,10 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
     // Make crediting this user succeed.
     when(accountCreditService.addCredit(user1, offerAmount))
       .thenReturn(Future.successful(AccountCredit(offerAmount)))
+    when(accountCreditService.currentCredit(user1))
+      .thenReturn(Future.successful(AccountCreditList(List(AccountCredit(offerAmount)))))
+    when(accountCreditService.currentCredit(user2))
+      .thenReturn(Future.successful(AccountCreditList(List(AccountCredit(offerAmount)))))
 
     // The default object under test.
     val handler = createHandler()

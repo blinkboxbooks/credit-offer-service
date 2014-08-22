@@ -38,6 +38,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
       logger.info(s"Handling Hudl2 registration event. User id: $userId, device id: ${deviceRegistration.device.id}")
       for (
         userProfile <- userService.userProfile(userId);
+        _ <- accountCreditService.currentCredit(userId); // don't proceed if account credit service is not available
         grantedOption <- Future(offerDao.grant(userId, offerCode));
         creditedOption <- optionallyCredit(userId, grantedOption);
         creditedAmountOption = creditedOption.map(_.asMoney);

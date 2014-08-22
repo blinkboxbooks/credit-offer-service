@@ -33,11 +33,7 @@ with TestDatabaseComponent with TestRepositoriesComponent {
     }
   }
 
-  def resetDatabase() = {
-    db.withSession { implicit session =>
-      tables.promotions.mutate(_.delete())
-    }
-  }
+  def resetDatabase() = db.withSession { implicit session => tables.promotions.mutate(_.delete)}
 
   before {
     historyDao = new DefaultOfferHistoryService[TestDatabaseTypes](db, promotionRepository, creditedAmount, creditLimit)
@@ -84,22 +80,6 @@ with TestDatabaseComponent with TestRepositoriesComponent {
       historyDao.isGranted(firstUserId, "unknown_offer") shouldBe false
       historyDao.isGranted(10, firstOffer) shouldBe false
     }
-  }
-
-  it should "list all offers granted to a single user correctly" in {
-    val offersOfFirstUser = historyDao.listGrantedOffersForUser(firstUserId)
-    offersOfFirstUser.size shouldBe 2
-    offersOfFirstUser.exists(
-      o => o.offerId == firstOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-    offersOfFirstUser.exists(
-      o => o.offerId == secondOffer && o.userId == firstUserId && o.creditedAmount == creditedAmount) shouldBe true
-
-    val offersOfSecondUser = historyDao.listGrantedOffersForUser(secondUserId)
-    offersOfSecondUser.size shouldBe 2
-    offersOfSecondUser.exists(
-      o => o.offerId == firstOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
-    offersOfSecondUser.exists(
-      o => o.offerId == secondOffer && o.userId == secondUserId && o.creditedAmount == creditedAmount) shouldBe true
   }
 
   it should "not give a promotion when the Credit Limit has been reached " in {

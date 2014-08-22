@@ -14,8 +14,6 @@ trait OfferHistoryService {
 
   def grant(userId: Int, offerId: String): Option[GrantedOffer]
 
-  def listGrantedOffersForUser(userId: Int): Seq[GrantedOffer]
-
 }
 
 case class GrantedOffer(userId: Int, offerId: String, creditedAmount: Money, createdAt: DateTime)

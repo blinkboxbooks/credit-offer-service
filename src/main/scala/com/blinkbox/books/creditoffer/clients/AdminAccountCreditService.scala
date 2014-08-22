@@ -14,9 +14,9 @@ import org.joda.money.Money
 import org.joda.money.CurrencyUnit
 import org.json4s.{ Formats, CustomSerializer }
 import org.json4s.JsonAST.{ JNull, JString }
-import spray.http.{ HttpEntity, HttpResponse }
+import spray.http.HttpResponse
 import spray.http.StatusCodes._
-import spray.httpx.RequestBuilding.Post
+import spray.httpx.RequestBuilding.{Get, Post}
 import scala.concurrent.Future
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 import scala.concurrent.duration.FiniteDuration
@@ -28,6 +28,8 @@ case class AccountCredit(amount: BigDecimal, currency: String) {
 object AccountCredit {
   def apply(amount: Money) = new AccountCredit(amount.getAmount, amount.getCurrencyUnit.getCurrencyCode)
 }
+
+case class AccountCreditList(items: List[AccountCredit])
 
 case class AccountCreditReq(amount: BigDecimal, currency: String, reason: String)
 object AccountCreditReq {
@@ -44,10 +46,12 @@ object AdminAccountCreditClientConfig {
 
 trait AdminAccountCreditService {
   def addCredit(userId: Int, amount: Money, authToken: String): Future[AccountCredit]
+  def currentCredit(userId: Int, authToken: String): Future[AccountCreditList]
 }
 
 trait AccountCreditService {
   def addCredit(userId: Int, amount: Money): Future[AccountCredit]
+  def currentCredit(userId: Int): Future[AccountCreditList]
 }
 
 class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
@@ -65,13 +69,14 @@ class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
   override def addCredit(userId: Int, amount: Money, authToken: String): Future[AccountCredit] = {
 
     val credit = AccountCreditReq(amount, "customer") // Pre-defined value in admin account credit service.
-    call(Post(s"$serviceUrl/admin/users/$userId/credit", credit), okPF, Some(authToken))
+    call(Post(s"$serviceUrl/admin/users/$userId/credit", credit), okPF[AccountCredit], Some(authToken))
   }
 
-  private val unmarshalResponse: HttpEntity => AccountCredit = unmarshal(version1JsonUnmarshaller[AccountCredit])
+  override def currentCredit(userId: Int, authToken: String): Future[AccountCreditList] =
+    call(Get(s"$serviceUrl/admin/users/$userId/credit"), okPF[AccountCreditList], Some(authToken))
 
-  private def okPF: PartialFunction[HttpResponse, AccountCredit] = {
-    case resp if resp.status == OK => unmarshalResponse(resp.entity)
+  private def okPF[T: Manifest]: PartialFunction[HttpResponse, T] = {
+    case resp if resp.status == OK => unmarshal(version1JsonUnmarshaller[T])(resp.entity)
   }
 }
 
@@ -95,9 +100,14 @@ class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvid
   extends AdminAccountCreditServiceClient(cfg) with AccountCreditService with AuthRetry {
   this: SendAndReceive =>
 
-  def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
+  override def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
     logger.info(s"Adding credit ($amount) for user $userId")
     withAuthRetry(super.addCredit(userId, amount, _))
+  }
+
+  override def currentCredit(userId: Int): Future[AccountCreditList] = {
+    logger.info(s"Retrieving current credit for user $userId")
+    withAuthRetry(super.currentCredit(userId, _))
   }
 }
 

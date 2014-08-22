@@ -66,8 +66,7 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   // Create the actor that consumes messages from RabbitMQ, and kick it off.
   system.actorOf(Props(new RabbitMqConsumer(consumerConnection.createChannel, appConfig.input,
     "credit-offer-consumer", deviceRegistrationHandler)),
-    name = "device-registration-event-listener")
-    .tell(RabbitMqConsumer.Init, null)
+    name = "device-registration-event-listener") ! RabbitMqConsumer.Init
 
   logger.info("Started")
 }

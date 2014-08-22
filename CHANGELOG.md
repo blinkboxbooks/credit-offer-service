@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.2 ([#26](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/26) 2014-08-22 15:07:07)
+
+Update RabbitMQ library
+
+### Improvements
+
+- Got latest rabbitmq-ha library version to get bugfix for cancelling timeouts.
+
+
 ## 0.1.1 ([#25](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/25) 2014-08-22 13:30:20)
 
 Bugfix: retry processing the event when experiencing connectivity issues

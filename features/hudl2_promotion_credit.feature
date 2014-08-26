@@ -3,7 +3,6 @@ Feature: Hudl2 Promotion Service
   I want users who register a Hudl2 to receive promotional credit of £10
   So that after the users finish their credit they will continue to buy books using cash
 
-  @one
   Scenario: Existing user registers a Hudl2
     Given an existing user registers a Hudl2
     When the event is processed
@@ -11,7 +10,6 @@ Feature: Hudl2 Promotion Service
     And the user receives an e-mail confirming that their account has been deposited with £10 credit
     And the credit event was reported
 
-  @two
   Scenario: User registers two Hudl2s to their account
     Given an existing user has a Hudl2 registered to their account
     And the user registers another Hudl2
@@ -20,7 +18,6 @@ Feature: Hudl2 Promotion Service
     And the user does not receive an e-mail about promotional credit
     And the credit event was not reported
 
-  @three
   Scenario: Promotion limit already met
     Given the amount of credit given out has met the promotion limit
     And an existing user registers a Hudl2
@@ -29,7 +26,7 @@ Feature: Hudl2 Promotion Service
     And the user does not receive an e-mail about promotional credit
     And the credit event was not reported
 
-  @negative @five
+  @negative
   Scenario: User registers a Hudl1
     Given an existing user registers a Hudl1
     When the event is processed
@@ -37,7 +34,7 @@ Feature: Hudl2 Promotion Service
     And the user does not receive an e-mail about promotional credit
     And the credit event was not reported
 
-  @negative @four
+  @negative
   Scenario: Event message comes in an incorrect format
     Given a user triggers a Hudl2 registration event in an invalid format
     When the event is processed

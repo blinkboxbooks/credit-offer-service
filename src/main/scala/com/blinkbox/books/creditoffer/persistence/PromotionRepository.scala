@@ -14,7 +14,6 @@ trait PromotionRepository[Profile <: BasicProfile] extends SlickSupport[Profile]
   def findAllUsersUsingOffer(offerId: String)(implicit session: Session) : Seq[Promotion]
   def list(implicit session: Session): List[Promotion]
   def insert(feature: Promotion)(implicit session: Session): Int
-  def delete(id: PromotionId)(implicit session: Session): Int
   def totalCreditedAmount()(implicit session: Session): Money
   
 }
@@ -36,9 +35,6 @@ trait JdbcPromotionRepository extends PromotionRepository[JdbcProfile] with Prom
 
   override def insert(promotion: Promotion)(implicit session: Session) =
     promotions.insert(promotion)
-
-  override def delete(id: PromotionId)(implicit session: Session) =
-    promotions.filter(_.id === id).delete
 
   override def totalCreditedAmount()(implicit session: Session): Money =
     Money.of(CurrencyUnit.of("GBP"), sumOfTotalCreditedAmount.bigDecimal)

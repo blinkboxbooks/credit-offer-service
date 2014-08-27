@@ -32,7 +32,7 @@ class DefaultOfferHistoryService[DbTypes <: DatabaseTypes](
         (newTotalCreditAmount.isLessThan(creditLimit) || newTotalCreditAmount.isEqual(creditLimit))
       val grantResult = if (canOffer) {
         val createdTime = DateTime.now(DateTimeZone.UTC)
-        promotionRepo.insert(new Promotion(PromotionId.Invalid, userId, offerId, createdTime, creditAmount))
+        promotionRepo.insert(new Promotion(userId, offerId, createdTime, creditAmount))
         Some(GrantedOffer(userId, offerId, creditAmount, createdTime))
       } else {
         None

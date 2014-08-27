@@ -26,10 +26,10 @@ with TestDatabaseComponent with TestRepositoriesComponent {
   def populateDatabase = {
     // Two different users and two different offers
     db.withSession { implicit session =>
-      tables.promotions += new Promotion(PromotionId.Invalid, firstUserId, firstOffer, DateTime.now, creditedAmount)
-      tables.promotions += new Promotion(PromotionId.Invalid, firstUserId, secondOffer, DateTime.now, creditedAmount)
-      tables.promotions += new Promotion(PromotionId.Invalid, secondUserId, firstOffer, DateTime.now, creditedAmount)
-      tables.promotions += new Promotion(PromotionId.Invalid, secondUserId, secondOffer, DateTime.now, creditedAmount)
+      tables.promotions += new Promotion(firstUserId, firstOffer, DateTime.now, creditedAmount)
+      tables.promotions += new Promotion(firstUserId, secondOffer, DateTime.now, creditedAmount)
+      tables.promotions += new Promotion(secondUserId, firstOffer, DateTime.now, creditedAmount)
+      tables.promotions += new Promotion(secondUserId, secondOffer, DateTime.now, creditedAmount)
     }
   }
 
@@ -54,7 +54,7 @@ with TestDatabaseComponent with TestRepositoriesComponent {
 
   it should "be able to create Promotion entries successfully" in {
     db.withSession { implicit session =>
-      val size = tables.promotions += new Promotion(PromotionId(1), 101, "sample_promotion", DateTime.now, creditedAmount)
+      val size = tables.promotions += new Promotion(101, "sample_promotion", DateTime.now, creditedAmount)
       size shouldBe 1
     }
   }

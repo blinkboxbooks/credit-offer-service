@@ -7,5 +7,5 @@ CREATE TABLE `promotions` (
   `promotion_id` varchar(20) NOT NULL,
   `created_at` datetime NOT NULL,
   `credited_amount` decimal(4,2) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`user_id`, `promotion_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

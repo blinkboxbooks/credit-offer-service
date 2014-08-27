@@ -1,5 +1,11 @@
 # Change log
 
+## 0.1.4 ([#29](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/29) 2014-08-27 09:26:02)
+
+No `id` in table and primary keys are `user_id` and `promotion_id`
+
+A patch to make the database better
+
 ## 0.1.3 ([#27](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/27) 2014-08-22 16:01:22)
 
 Admin account credit service check

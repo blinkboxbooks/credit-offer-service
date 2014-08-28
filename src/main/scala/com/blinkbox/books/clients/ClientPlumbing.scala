@@ -46,6 +46,7 @@ trait ClientPlumbing extends StrictLogging {
   private def exceptionTransformer(ex: Throwable) = ex match {
     case e: spray.can.Http.ConnectionAttemptFailedException => new ConnectionAttemptFailedException(e.getMessage, e)
     case e: spray.can.Http.RequestTimeoutException          => new RequestTimeoutException(e.getMessage, e)
+    case e: spray.can.Http.ConnectionException              => new ConnectionException(e.getMessage, e)
     case other                                              => other
   }
 

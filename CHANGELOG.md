@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.5 ([#31](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/31) 2014-08-28 17:12:56)
+
+CP-1780 Handle ConnectionExceptions
+
+### Bug fix:
+
+- Correctly handle Spray ConnectionExceptions, translating them to the exceptions specified in the client API.
+
+
 ## 0.1.4 ([#29](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/29) 2014-08-27 09:26:02)
 
 No `id` in table and primary keys are `user_id` and `promotion_id`

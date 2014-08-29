@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.6 ([#32](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/32) 2014-08-29 11:49:04)
+
+Fixed content-type for email message.
+
+### Bug fix:
+
+- Fixed content type for Exact Target email message to match latest schema.
+
+
 ## 0.1.5 ([#31](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/31) 2014-08-28 17:12:56)
 
 CP-1780 Handle ConnectionExceptions

@@ -54,7 +54,7 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   val authClient = AuthServiceClient(AuthServiceClientConfig(config))
   val tokenProviderActor = system.actorOf(Props(classOf[ZuulTokenProviderActor], appConfig.account, authClient),
     name = "zuul-token-provider-actor")
-  val authTokenProvider = new ZuulTokenProvider(tokenProviderActor)
+  val authTokenProvider = new ZuulTokenProvider(tokenProviderActor, appConfig.requestTimeout)
 
   val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(authTokenProvider, AdminAccountCreditClientConfig(config))
   val userService = RetryingUserServiceClient(authTokenProvider, AuthServiceClientConfig(config))

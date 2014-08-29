@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.9 ([#33](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/33) 2014-08-29 13:30:01)
+
+Use Mailer by default instead of Exact Target.
+
+### Improvements.
+
+- Switch to use Mailer by default for sending emails, instead of Exact Target.
+
+
 ## 0.1.8 ([#30](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/30) 2014-08-28 15:51:09)
 
 Missing the udp port for gelf

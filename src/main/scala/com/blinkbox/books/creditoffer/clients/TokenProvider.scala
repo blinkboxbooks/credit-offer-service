@@ -6,7 +6,7 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.blinkbox.books.clients.UnauthorizedException
-import com.typesafe.scalalogging.Logging
+import com.typesafe.scalalogging.slf4j.StrictLogging
 import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,11 +82,10 @@ class ZuulTokenProvider(providerActor: ActorRef) extends TokenProvider {
 }
 
 trait AuthRetry {
-  this: Logging =>
+  this: StrictLogging =>
 
   val tokenProvider: TokenProvider
 
-  // TODO: Add tests for this
   def withAuthRetry[T](f: (String) => Future[T])(implicit ec: ExecutionContext): Future[T] = {
     tokenProvider.accessToken.flatMap(accessToken => f(accessToken.value)) recoverWith {
       case ex: UnauthorizedException =>

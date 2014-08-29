@@ -1,0 +1,9 @@
+local:
+  services:
+    amqp: amqp://guest:guest@localhost:5672
+    db: mysql2://gospoken:gospoken@localhost/credit_offer
+
+qa:
+  services:
+    amqp: tbc
+    db: tbc

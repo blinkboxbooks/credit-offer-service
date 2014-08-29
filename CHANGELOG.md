@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.10 ([#34](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/34) 2014-08-29 14:17:07)
+
+Bugfix: Logging self-type in AuthRetry trait 
+
+### Bugfix
+
+- Changed the self-type of `AuthRetry` trait to `StrictLogging`. For some reason using `Logging` caused `scala.NotImplementedError` errors at runtime.
+
 ## 0.1.9 ([#33](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/33) 2014-08-29 13:30:01)
 
 Use Mailer by default instead of Exact Target.

@@ -1,5 +1,36 @@
 # Change log
 
+## 0.1.9 ([#33](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/33) 2014-08-29 13:30:01)
+
+Use Mailer by default instead of Exact Target.
+
+### Improvements.
+
+- Switch to use Mailer by default for sending emails, instead of Exact Target.
+
+
+## 0.1.8 ([#30](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/30) 2014-08-28 15:51:09)
+
+Missing the udp port for gelf
+
+Patch to add logging port for gelf
+
+## 0.1.7 ([#28](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/28) 2014-08-26 10:32:35)
+
+Acceptance tests
+
+Test Improvement: Adding acceptance tests for credit-offer-service. 
+
+
+## 0.1.6 ([#32](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/32) 2014-08-29 11:49:04)
+
+Fixed content-type for email message.
+
+### Bug fix:
+
+- Fixed content type for Exact Target email message to match latest schema.
+
+
 ## 0.1.5 ([#31](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/31) 2014-08-28 17:12:56)
 
 CP-1780 Handle ConnectionExceptions

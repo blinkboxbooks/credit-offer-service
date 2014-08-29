@@ -1,8 +1,9 @@
 Feature: Hudl2 Promotion Service
   As a Marketing Director
   I want users who register a Hudl2 to receive promotional credit of £10
-  So that after the users finish their credit they will continue to buy books using cash
+  So that users are incentivised to use blinkbox books on a Hudl2
 
+  @one
   Scenario: Existing user registers a Hudl2
     Given an existing user registers a Hudl2
     When the event is processed
@@ -11,7 +12,7 @@ Feature: Hudl2 Promotion Service
     And the credit event was reported
 
   Scenario: User registers two Hudl2s to their account
-    Given an existing user has a Hudl2 registered to their account
+    Given an existing user has registered a Hudl2
     And the user registers another Hudl2
     When the event is processed
     Then the user does not receive any additional credit

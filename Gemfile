@@ -1,8 +1,8 @@
 source 'http://artifactory.blinkbox.local/artifactory/api/gems/bbb-gems/'
 source 'http://artifactory.blinkbox.local/artifactory/api/gems/rubygems/'
 
-group :development, :test do
-  gem 'bunny', '~> 0.0', '>= 0.10.8'
+group :test do
+  gem 'bunny'
   gem 'bundler'
   gem 'cucumber'
   gem 'rake'

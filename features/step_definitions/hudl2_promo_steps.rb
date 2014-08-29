@@ -4,12 +4,20 @@ require 'time'
 
 DB = $database
 
-Given(/^an existing user registers a Hudl(2|1)$/) do |model|
+Given(/^an existing user (has registered|registers) a Hudl(2|1)$/) do |tense, model|
   # set queue msg to device registration
   model == '2' ? @input_msg = device_registration_hudl2_msg : @input_msg = device_registration_hudl1_msg
   @expected_email_output = send_mail_event_msg
   @expected_reporting_output = credit_reporting_msg
   @expected_credit_output = credit_request_body
+
+  if (/has/ =~ tense) # nothing more to do if we are just registering
+    step ("the event is processed")
+
+    sleep 1 # allowing time for credit-offer-service send messages and make requests
+    purge_queues
+    clear_http_listener_logs
+  end
 end
 
 Given(/^the user registers another Hudl2$/) do
@@ -17,17 +25,17 @@ Given(/^the user registers another Hudl2$/) do
   @input_msg = device_registration_again_msg
 end
 
-Given(/^an existing user has a Hudl2 registered to their account$/) do
-  #register a huddle2 - setup - clear queues
-  steps %Q{
-    Given an existing user registers a Hudl2
-    When the event is processed
-  }
-
-  sleep 1 # allowing time for credit-offer-service send messages and make requests
-  purge_queues
-  clear_http_listener_logs
-end
+# Given(/^an existing user has a Hudl2 registered to their account$/) do
+#   #register a huddle2 - setup - clear queues
+#   steps %Q{
+#     Given an existing user registers a Hudl2
+#     When the event is processed
+#   }
+#
+#   sleep 1 # allowing time for credit-offer-service send messages and make requests
+#   purge_queues
+#   clear_http_listener_logs
+# end
 
 Given(/^a user triggers a Hudl2 registration event in an invalid format$/) do
   @input_msg = device_registration_invalid_format

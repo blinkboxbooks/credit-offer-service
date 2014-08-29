@@ -18,7 +18,6 @@ delete '/log/clear' do
 end
 
 get '/admin/users/*/credit' do
-  # log_request
   response.headers['content-type'] = 'application/vnd.blinkboxbooks.data.v1+json'
 
   "{\"type\":\"urn:blinkboxbooks:schema:list\",
@@ -28,6 +27,7 @@ end
 
 get '/log/requests' do
   unless params['requestNo']
+    p @@request_bodies.last
     return @@request_bodies.last
   end
   @@request_bodies[params['requestNo'].to_i]

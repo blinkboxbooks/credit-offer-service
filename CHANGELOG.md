@@ -1,5 +1,12 @@
 # Change log
 
+## 0.1.7 ([#28](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/28) 2014-08-26 10:32:35)
+
+Acceptance tests
+
+Test Improvement: Adding acceptance tests for credit-offer-service. 
+
+
 ## 0.1.6 ([#32](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/32) 2014-08-29 11:49:04)
 
 Fixed content-type for email message.

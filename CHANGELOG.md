@@ -1,5 +1,11 @@
 # Change log
 
+## 0.1.8 ([#30](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/30) 2014-08-28 15:51:09)
+
+Missing the udp port for gelf
+
+Patch to add logging port for gelf
+
 ## 0.1.7 ([#28](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/28) 2014-08-26 10:32:35)
 
 Acceptance tests

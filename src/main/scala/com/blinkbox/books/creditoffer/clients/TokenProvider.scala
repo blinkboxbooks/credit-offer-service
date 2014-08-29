@@ -73,9 +73,9 @@ class ZuulTokenProviderActor(acc: Account, authService: AuthService) extends Act
   }
 }
 
-class ZuulTokenProvider(providerActor: ActorRef) extends TokenProvider {
+class ZuulTokenProvider(providerActor: ActorRef, timeout: Timeout) extends TokenProvider {
 
-  implicit val askTimeout = Timeout(5.minutes)
+  implicit val askTimeout = timeout
 
   override def accessToken: Future[AccessToken] = (providerActor ? GetAccessToken).mapTo[AccessToken]
   override def refreshedAccessToken: Future[AccessToken] = (providerActor ? RefreshAccessToken).mapTo[AccessToken]

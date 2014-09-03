@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.11 ([#35](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/35) 2014-09-01 08:40:54)
+
+Updated tests to use failingWith from common-test
+
+### Improvement
+
+- Updated tests to use `failingWith` from common-test library instead of using a variant of it defined in this project.
+
 ## 0.1.10 ([#34](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/34) 2014-08-29 14:17:07)
 
 Bugfix: Logging self-type in AuthRetry trait 

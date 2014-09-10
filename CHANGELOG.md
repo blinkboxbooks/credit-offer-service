@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.12 ([#36](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/36) 2014-09-10 15:08:24)
+
+CP-1774  Update RabbitMQ library.
+
+### Improvements
+
+- Retry connecting to RabbitMQ on authentication error (fix in upstream library).
+
+
 ## 0.1.11 ([#35](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/35) 2014-09-01 08:40:54)
 
 Updated tests to use failingWith from common-test

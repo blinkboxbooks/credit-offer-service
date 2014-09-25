@@ -1,30 +1,30 @@
 package com.blinkbox.books.creditoffer.clients
 
+import java.net.URL
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.blinkbox.books.clients._
 import com.blinkbox.books.config._
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.StrictLogging
-import java.net.URL
-import java.util.concurrent.TimeUnit
 import org.json4s.{DefaultFormats, Formats}
-import spray.http._
 import spray.http.MediaTypes.`application/x-www-form-urlencoded`
 import spray.http.StatusCodes._
+import spray.http._
 import spray.httpx.Json4sJacksonSupport
 import spray.httpx.RequestBuilding.{Get, Post}
 import spray.httpx.marshalling.Marshaller
 
-import scala.concurrent.duration._
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 //
 // Client API for auth service.
 //
 // NOTE: This should be replaced be a client library for the Auth service when that's available.
 //
-
 trait AuthService {
   def authenticate(userName: String, password: String): Future[AuthTokens]
   def authenticate(refreshToken: String): Future[AuthTokens]
@@ -38,30 +38,34 @@ trait UserService {
 case class AuthTokens(access_token: String, refresh_token: String)
 case class UserProfile(user_username: String, user_first_name: String, user_last_name: String)
 
-class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
+class AuthServiceClient(cfg: Config) extends AuthService
   with ClientPlumbing with StrictLogging with Json4sJacksonSupport {
     this: SendAndReceive =>
 
   import AuthServiceClient.FormDataMarshaller
 
-  override protected val timeout: Timeout = Timeout(cfg.timeout)
-  override protected implicit val system: ActorSystem = ActorSystem("auth-service-client")
+  private val clientCfg = AuthServiceClientConfig(cfg)
+  private val serviceUrl = clientCfg.url.toString
+
+  override protected val timeout: Timeout = Timeout(clientCfg.timeout)
+  // Actor system needs a config instance we load to pick up the settings from external application.conf (CP-1879)
+  override protected implicit val system: ActorSystem = ActorSystem("auth-service-client", cfg)
   override implicit def json4sJacksonFormats: Formats = DefaultFormats
 
   override def authenticate(username: String, password: String): Future[AuthTokens] = {
     val reqData = Map("grant_type" -> "password", "username" -> username, "password" -> password)
     // Since we mix in JsonSupport in this class, we need to provide a FormData marshaller explicitly to send the request
     // with correct content type (application/x-www-form-urlencoded). Otherwise FormData is marshaled to JSON.
-    call(Post(s"${cfg.url}/oauth2/token", FormData(reqData))(FormDataMarshaller), authTokensResponseHandler)
+    call(Post(s"$serviceUrl/oauth2/token", FormData(reqData))(FormDataMarshaller), authTokensResponseHandler)
   }
 
   override def authenticate(refreshToken: String): Future[AuthTokens] = {
     val reqData = Map("grant_type" -> "refresh_token", "refresh_token" -> refreshToken)
-    call(Post(s"${cfg.url}/oauth2/token", FormData(reqData))(FormDataMarshaller), authTokensResponseHandler)
+    call(Post(s"$serviceUrl/oauth2/token", FormData(reqData))(FormDataMarshaller), authTokensResponseHandler)
   }
 
   override def userProfile(userId: Int, authToken: String): Future[UserProfile] = {
-    call(Get(s"${cfg.url}/admin/users/$userId"), userProfileResponseHandler, Some(authToken))
+    call(Get(s"$serviceUrl/admin/users/$userId"), userProfileResponseHandler, Some(authToken))
   }
 
   private def userProfileResponseHandler: PartialFunction[HttpResponse, UserProfile] = {
@@ -77,7 +81,7 @@ class AuthServiceClient(cfg: AuthServiceClientConfig) extends AuthService
 }
 
 object AuthServiceClient {
-  def apply(cfg: AuthServiceClientConfig) = new AuthServiceClient(cfg) with SendAndReceive
+  def apply(cfg: Config) = new AuthServiceClient(cfg) with SendAndReceive
 
   implicit val FormDataMarshaller: Marshaller[FormData] =
     Marshaller.delegate[FormData, String](`application/x-www-form-urlencoded`) { (formData, contentType) ⇒
@@ -85,7 +89,7 @@ object AuthServiceClient {
     }
 }
 
-class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: AuthServiceClientConfig)
+class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: Config)
   extends AuthServiceClient(cfg) with UserService with AuthRetry {
   this: SendAndReceive =>
 
@@ -96,7 +100,7 @@ class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: 
 }
 
 object RetryingUserServiceClient {
-  def apply(tokenProvider: TokenProvider, cfg: AuthServiceClientConfig) =
+  def apply(tokenProvider: TokenProvider, cfg: Config) =
     new RetryingUserServiceClient(tokenProvider, cfg) with SendAndReceive
 }
 

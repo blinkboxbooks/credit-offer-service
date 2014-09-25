@@ -23,7 +23,7 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
   implicit val defaultPatience = PatienceConfig(timeout = scaled(Span(5, Seconds)), interval = scaled(Span(25, Millis)))
 
   test("add credit to user account") {
-    val client = new AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config)) with OkAddSendReceiveMock
+    val client = new AdminAccountCreditServiceClient(config) with OkAddSendReceiveMock
 
     val amount = Money.of(CurrencyUnit.GBP, BigDecimal("10.0").bigDecimal)
     whenReady(client.addCredit(123, amount, "someaccesstoken")) { result =>
@@ -32,7 +32,7 @@ class AdminAccountCreditClientTests extends FunSuite with ScalaFutures with Conf
   }
 
   test("get current credit") {
-    val client = new AdminAccountCreditServiceClient(AdminAccountCreditClientConfig(config)) with AccountListSendReceiveMock
+    val client = new AdminAccountCreditServiceClient(config) with AccountListSendReceiveMock
 
     whenReady(client.currentCredit(123, "someaccesstoken")) { result =>
       assert(result == AccountCreditList(List(

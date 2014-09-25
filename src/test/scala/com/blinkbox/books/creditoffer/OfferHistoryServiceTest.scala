@@ -1,5 +1,6 @@
 package com.blinkbox.books.creditoffer
 
+import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.creditoffer.persistence._
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime

@@ -2,13 +2,13 @@ package com.blinkbox.books.creditoffer
 
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
+import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.creditoffer.persistence._
-import com.blinkbox.books.config.Configuration
 import com.blinkbox.books.logging.Loggers
 import com.blinkbox.books.messaging.ActorErrorHandler
-import com.blinkbox.books.rabbitmq._
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
+import com.blinkbox.books.rabbitmq._
 import com.typesafe.scalalogging.slf4j.StrictLogging
 
 /**
@@ -31,7 +31,8 @@ object CreditOfferService extends App with Configuration with StrictLogging with
     db, promotionRepository, appConfig.creditAmount, appConfig.creditLimit)
 
   // Initialise the actor system.
-  implicit val system = ActorSystem("credit-offer-service")
+  // Actor system needs a config instance we load to pick up the settings from external application.conf (CP-1879)
+  implicit val system = ActorSystem("credit-offer-service", config)
   implicit val ec = system.dispatcher
   implicit val requestTimeout = Timeout(appConfig.requestTimeout)
 
@@ -51,13 +52,13 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   }
   val eventSender = new CompoundEventSender(new ReportingEventSender(reportingPublisher), mailEventSender)
 
-  val authClient = AuthServiceClient(AuthServiceClientConfig(config))
+  val authClient = AuthServiceClient(config)
   val tokenProviderActor = system.actorOf(Props(classOf[ZuulTokenProviderActor], appConfig.account, authClient),
     name = "zuul-token-provider-actor")
   val authTokenProvider = new ZuulTokenProvider(tokenProviderActor, appConfig.requestTimeout)
 
-  val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(authTokenProvider, AdminAccountCreditClientConfig(config))
-  val userService = RetryingUserServiceClient(authTokenProvider, AuthServiceClientConfig(config))
+  val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(authTokenProvider, config)
+  val userService = RetryingUserServiceClient(authTokenProvider, config)
 
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, adminAccountCreditService, userService, eventSender,

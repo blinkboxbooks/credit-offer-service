@@ -24,7 +24,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   implicit val defaultPatience = PatienceConfig(timeout = scaled(Span(5, Seconds)), interval = scaled(Span(25, Millis)))
 
   test("Authenticate with password") {
-    val client = new AuthServiceClient(AuthServiceClientConfig(config)) with OkSendReceiveMock
+    val client = new AuthServiceClient(config) with OkSendReceiveMock
 
     whenReady(client.authenticate("someuser", "somepassword")) { result =>
       assert(result == AuthTokens("someaccesstoken", "somerefreshtoken"))
@@ -41,7 +41,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Throws ThrottledException when Auth server returns '429 Too Many Requests'") {
-    val client = new AuthServiceClient(AuthServiceClientConfig(config)) with ThrottledSendReceiveMock
+    val client = new AuthServiceClient(config) with ThrottledSendReceiveMock
     val w = new Waiter
 
     client.authenticate("someuser", "somepassword") onComplete {
@@ -56,7 +56,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Authenticate with refresh token") {
-    val client = new AuthServiceClient(AuthServiceClientConfig(config)) with OkSendReceiveMock
+    val client = new AuthServiceClient(config) with OkSendReceiveMock
 
     whenReady(client.authenticate("somerefreshtoken")) { result =>
       assert(result == AuthTokens("someaccesstoken", "somerefreshtoken"))
@@ -64,7 +64,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Get user profile") {
-    val client = new AuthServiceClient(AuthServiceClientConfig(config)) with UserProfileSendReceiveMock
+    val client = new AuthServiceClient(config) with UserProfileSendReceiveMock
 
     whenReady(client.userProfile(1926, "someToken")) { result =>
       assert(result == UserProfile("credit-offer-service@blinkbox.com", "credit-offer", "service"))

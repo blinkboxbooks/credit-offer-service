@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.13 ([#38](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/38) 2014-09-26 10:20:23)
+
+Bump common-config to support substitution
+
+### Patch
+
+Bump config library
+
 ## 0.1.12 ([#36](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/36) 2014-09-10 15:08:24)
 
 CP-1774  Update RabbitMQ library.

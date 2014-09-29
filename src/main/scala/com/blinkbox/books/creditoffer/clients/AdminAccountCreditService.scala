@@ -1,5 +1,8 @@
 package com.blinkbox.books.creditoffer.clients
 
+import java.net.URL
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.blinkbox.books.clients._
@@ -8,19 +11,16 @@ import com.blinkbox.books.spray.JsonFormats._
 import com.blinkbox.books.spray.v1.Version1JsonSupport
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.StrictLogging
-import java.net.URL
-import java.util.concurrent.TimeUnit
-import org.joda.money.Money
-import org.joda.money.CurrencyUnit
-import org.json4s.{ Formats, CustomSerializer }
-import org.json4s.JsonAST.{ JNull, JString }
+import org.joda.money.{CurrencyUnit, Money}
+import org.json4s.JsonAST.{JNull, JString}
+import org.json4s.{CustomSerializer, Formats}
 import spray.http.HttpResponse
 import spray.http.StatusCodes._
 import spray.httpx.RequestBuilding.{Get, Post}
-import scala.concurrent.Future
+
+import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration._
 
 case class AccountCredit(amount: BigDecimal, currency: String) {
   def asMoney = Money.of(CurrencyUnit.of(currency), amount.bigDecimal)
@@ -54,14 +54,13 @@ trait AccountCreditService {
   def currentCredit(userId: Int): Future[AccountCreditList]
 }
 
-class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
+class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig, val system: ActorSystem, val ec: ExecutionContext)
   extends AdminAccountCreditService with ClientPlumbing with StrictLogging with Version1JsonSupport {
   this: SendAndReceive =>
 
-  import AdminAccountCreditServiceClient._
+  import com.blinkbox.books.creditoffer.clients.AdminAccountCreditServiceClient._
 
   override protected val timeout: Timeout = Timeout(cfg.timeout)
-  override protected implicit val system: ActorSystem = ActorSystem("admin-account-credit-service-client")
   implicit override def version1JsonFormats: Formats = blinkboxFormat() + BigDecimalSerializer
 
   private val serviceUrl = cfg.url.toString
@@ -81,7 +80,8 @@ class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig)
 }
 
 object AdminAccountCreditServiceClient {
-  def apply(cfg: AdminAccountCreditClientConfig) = new AdminAccountCreditServiceClient(cfg) with SendAndReceive
+  def apply(cfg: AdminAccountCreditClientConfig, system: ActorSystem, ec: ExecutionContext) =
+    new AdminAccountCreditServiceClient(cfg, system, ec) with SendAndReceive
 
   /**
    *  Custom serializer for BigDecimals because:
@@ -96,22 +96,22 @@ object AdminAccountCreditServiceClient {
   }))
 }
 
-class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvider, cfg: AdminAccountCreditClientConfig)
-  extends AdminAccountCreditServiceClient(cfg) with AccountCreditService with AuthRetry {
+class RetryingAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig, val tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext)
+  extends AdminAccountCreditServiceClient(cfg, system, ec) with AccountCreditService with AuthRetry {
   this: SendAndReceive =>
 
   override def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
     logger.info(s"Adding credit ($amount) for user $userId")
-    withAuthRetry(super.addCredit(userId, amount, _))
+    withAuthRetry(super.addCredit(userId, amount, _))(ec)
   }
 
   override def currentCredit(userId: Int): Future[AccountCreditList] = {
     logger.info(s"Retrieving current credit for user $userId")
-    withAuthRetry(super.currentCredit(userId, _))
+    withAuthRetry(super.currentCredit(userId, _))(ec)
   }
 }
 
 object RetryingAdminAccountCreditServiceClient {
-  def apply(tokenProvider: TokenProvider, cfg: AdminAccountCreditClientConfig) =
-    new RetryingAccountCreditServiceClient(tokenProvider, cfg) with SendAndReceive
+  def apply(cfg: Config, tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext) =
+    new RetryingAccountCreditServiceClient(AdminAccountCreditClientConfig(cfg), tokenProvider, system, ec) with SendAndReceive
 }

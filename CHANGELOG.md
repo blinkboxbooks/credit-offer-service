@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.15 ([#39](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/39) 2014-09-29 15:11:59)
+
+Fixed failing build
+
+### Bugfix
+
+- Fixed builds failing because of logger initialisation timeouts
+
 ## 0.1.14 ([#37](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/37) 2014-09-25 15:19:28)
 
 Fixed Akka logging

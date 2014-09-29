@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.14 ([#37](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/37) 2014-09-25 15:19:28)
+
+Fixed Akka logging
+
+### Bugfix
+
+- Akka log messages now go to Graylog ([CP-1879](http://jira.blinkbox.local/jira/browse/CP-1879))
+
 ## 0.1.13 ([#38](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/38) 2014-09-26 10:20:23)
 
 Bump common-config to support substitution

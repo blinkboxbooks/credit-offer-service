@@ -18,8 +18,8 @@ import spray.http.HttpResponse
 import spray.http.StatusCodes._
 import spray.httpx.RequestBuilding.{Get, Post}
 
-import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 
 case class AccountCredit(amount: BigDecimal, currency: String) {
@@ -54,19 +54,16 @@ trait AccountCreditService {
   def currentCredit(userId: Int): Future[AccountCreditList]
 }
 
-class AdminAccountCreditServiceClient(cfg: Config)
+class AdminAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig, val system: ActorSystem, val ec: ExecutionContext)
   extends AdminAccountCreditService with ClientPlumbing with StrictLogging with Version1JsonSupport {
   this: SendAndReceive =>
 
-  import AdminAccountCreditServiceClient._
+  import com.blinkbox.books.creditoffer.clients.AdminAccountCreditServiceClient._
 
-  private val clientCfg = AdminAccountCreditClientConfig(cfg)
-  override protected val timeout: Timeout = Timeout(clientCfg.timeout)
-  // Actor system needs a config instance we load to pick up the settings from external application.conf (CP-1879)
-  override protected implicit val system: ActorSystem = ActorSystem("admin-account-credit-service-client", cfg)
+  override protected val timeout: Timeout = Timeout(cfg.timeout)
   implicit override def version1JsonFormats: Formats = blinkboxFormat() + BigDecimalSerializer
 
-  private val serviceUrl = clientCfg.url.toString
+  private val serviceUrl = cfg.url.toString
 
   override def addCredit(userId: Int, amount: Money, authToken: String): Future[AccountCredit] = {
 
@@ -83,7 +80,8 @@ class AdminAccountCreditServiceClient(cfg: Config)
 }
 
 object AdminAccountCreditServiceClient {
-  def apply(cfg: Config) = new AdminAccountCreditServiceClient(cfg) with SendAndReceive
+  def apply(cfg: AdminAccountCreditClientConfig, system: ActorSystem, ec: ExecutionContext) =
+    new AdminAccountCreditServiceClient(cfg, system, ec) with SendAndReceive
 
   /**
    *  Custom serializer for BigDecimals because:
@@ -98,22 +96,22 @@ object AdminAccountCreditServiceClient {
   }))
 }
 
-class RetryingAccountCreditServiceClient(override val tokenProvider: TokenProvider, cfg: Config)
-  extends AdminAccountCreditServiceClient(cfg) with AccountCreditService with AuthRetry {
+class RetryingAccountCreditServiceClient(cfg: AdminAccountCreditClientConfig, val tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext)
+  extends AdminAccountCreditServiceClient(cfg, system, ec) with AccountCreditService with AuthRetry {
   this: SendAndReceive =>
 
   override def addCredit(userId: Int, amount: Money): Future[AccountCredit] = {
     logger.info(s"Adding credit ($amount) for user $userId")
-    withAuthRetry(super.addCredit(userId, amount, _))
+    withAuthRetry(super.addCredit(userId, amount, _))(ec)
   }
 
   override def currentCredit(userId: Int): Future[AccountCreditList] = {
     logger.info(s"Retrieving current credit for user $userId")
-    withAuthRetry(super.currentCredit(userId, _))
+    withAuthRetry(super.currentCredit(userId, _))(ec)
   }
 }
 
 object RetryingAdminAccountCreditServiceClient {
-  def apply(tokenProvider: TokenProvider, cfg: Config) =
-    new RetryingAccountCreditServiceClient(tokenProvider, cfg) with SendAndReceive
+  def apply(cfg: Config, tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext) =
+    new RetryingAccountCreditServiceClient(AdminAccountCreditClientConfig(cfg), tokenProvider, system, ec) with SendAndReceive
 }

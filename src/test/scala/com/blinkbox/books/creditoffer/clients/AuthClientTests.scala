@@ -1,30 +1,33 @@
 package com.blinkbox.books.creditoffer.clients
 
-import akka.actor.ActorRefFactory
-import com.blinkbox.books.clients.{ThrottledException, SendAndReceive}
+import akka.actor.{ActorRefFactory, ActorSystem}
+import com.blinkbox.books.clients.{SendAndReceive, ThrottledException}
 import com.blinkbox.books.config.Configuration
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
-import org.scalatest.concurrent.{ AsyncAssertions, ScalaFutures }
+import org.scalatest.concurrent.{AsyncAssertions, ScalaFutures}
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.time.{ Millis, Seconds, Span }
+import org.scalatest.time.{Millis, Seconds, Span}
+import spray.http.ContentTypes.`application/json`
 import spray.http.HttpHeaders.RawHeader
 import spray.http._
-import spray.http.ContentTypes.`application/json`
-import scala.concurrent.{ ExecutionContext, Future }
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
 class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions with Configuration with MockitoSugar {
 
+  val system = ActorSystem("test-system", config)
+  val clientCfg = AuthServiceClientConfig(config)
   // Settings for whenReady/Waiter. We override the default values because the first call to the mock
   // Feature service takes longer than the default values.
   implicit val defaultPatience = PatienceConfig(timeout = scaled(Span(5, Seconds)), interval = scaled(Span(25, Millis)))
 
   test("Authenticate with password") {
-    val client = new AuthServiceClient(config) with OkSendReceiveMock
+    val client = new AuthServiceClient(clientCfg, system, system.dispatcher) with OkSendReceiveMock
 
     whenReady(client.authenticate("someuser", "somepassword")) { result =>
       assert(result == AuthTokens("someaccesstoken", "somerefreshtoken"))
@@ -32,8 +35,8 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Authenticate with password having unicode characters") {
+    import com.blinkbox.books.creditoffer.clients.AuthServiceClient.FormDataMarshaller
     import spray.util._
-    import AuthServiceClient.FormDataMarshaller
 
     val formData = FormData(Map("unicode" -> "中国扬声器可以阅读本"))
     val result = spray.httpx.marshalling.marshal(formData)
@@ -41,7 +44,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Throws ThrottledException when Auth server returns '429 Too Many Requests'") {
-    val client = new AuthServiceClient(config) with ThrottledSendReceiveMock
+    val client = new AuthServiceClient(clientCfg, system, system.dispatcher) with ThrottledSendReceiveMock
     val w = new Waiter
 
     client.authenticate("someuser", "somepassword") onComplete {
@@ -56,7 +59,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Authenticate with refresh token") {
-    val client = new AuthServiceClient(config) with OkSendReceiveMock
+    val client = new AuthServiceClient(clientCfg, system, system.dispatcher) with OkSendReceiveMock
 
     whenReady(client.authenticate("somerefreshtoken")) { result =>
       assert(result == AuthTokens("someaccesstoken", "somerefreshtoken"))
@@ -64,7 +67,7 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
   }
 
   test("Get user profile") {
-    val client = new AuthServiceClient(config) with UserProfileSendReceiveMock
+    val client = new AuthServiceClient(clientCfg, system, system.dispatcher) with UserProfileSendReceiveMock
 
     whenReady(client.userProfile(1926, "someToken")) { result =>
       assert(result == UserProfile("credit-offer-service@blinkbox.com", "credit-offer", "service"))

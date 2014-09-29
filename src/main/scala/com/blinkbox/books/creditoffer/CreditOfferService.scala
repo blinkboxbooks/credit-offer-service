@@ -1,5 +1,7 @@
 package com.blinkbox.books.creditoffer
 
+import java.util.concurrent.Executors
+
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
 import com.blinkbox.books.config.Configuration
@@ -10,6 +12,9 @@ import com.blinkbox.books.messaging.ActorErrorHandler
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.rabbitmq._
 import com.typesafe.scalalogging.slf4j.StrictLogging
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.forkjoin.ForkJoinPool
 
 /**
  * The main entry point of the credit offer service.
@@ -52,13 +57,16 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   }
   val eventSender = new CompoundEventSender(new ReportingEventSender(reportingPublisher), mailEventSender)
 
-  val authClient = AuthServiceClient(config)
+  // Create clients to auth and admin account credit services
+  val clientEc = ExecutionContext.fromExecutorService(new ForkJoinPool)
+
+  val authClient = AuthServiceClient(config, system, clientEc)
   val tokenProviderActor = system.actorOf(Props(classOf[ZuulTokenProviderActor], appConfig.account, authClient),
     name = "zuul-token-provider-actor")
   val authTokenProvider = new ZuulTokenProvider(tokenProviderActor, appConfig.requestTimeout)
 
-  val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(authTokenProvider, config)
-  val userService = RetryingUserServiceClient(authTokenProvider, config)
+  val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(config, authTokenProvider, system, clientEc)
+  val userService = RetryingUserServiceClient(AuthServiceClientConfig(config), authTokenProvider, system, clientEc)
 
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, adminAccountCreditService, userService, eventSender,

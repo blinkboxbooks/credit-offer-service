@@ -17,7 +17,7 @@ import spray.httpx.Json4sJacksonSupport
 import spray.httpx.RequestBuilding.{Get, Post}
 import spray.httpx.marshalling.Marshaller
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 //
@@ -38,18 +38,15 @@ trait UserService {
 case class AuthTokens(access_token: String, refresh_token: String)
 case class UserProfile(user_username: String, user_first_name: String, user_last_name: String)
 
-class AuthServiceClient(cfg: Config) extends AuthService
+class AuthServiceClient(cfg: AuthServiceClientConfig, val system: ActorSystem, val ec: ExecutionContext) extends AuthService
   with ClientPlumbing with StrictLogging with Json4sJacksonSupport {
     this: SendAndReceive =>
 
   import AuthServiceClient.FormDataMarshaller
 
-  private val clientCfg = AuthServiceClientConfig(cfg)
-  private val serviceUrl = clientCfg.url.toString
+  private val serviceUrl = cfg.url.toString
 
-  override protected val timeout: Timeout = Timeout(clientCfg.timeout)
-  // Actor system needs a config instance we load to pick up the settings from external application.conf (CP-1879)
-  override protected implicit val system: ActorSystem = ActorSystem("auth-service-client", cfg)
+  override protected val timeout: Timeout = Timeout(cfg.timeout)
   override implicit def json4sJacksonFormats: Formats = DefaultFormats
 
   override def authenticate(username: String, password: String): Future[AuthTokens] = {
@@ -81,7 +78,8 @@ class AuthServiceClient(cfg: Config) extends AuthService
 }
 
 object AuthServiceClient {
-  def apply(cfg: Config) = new AuthServiceClient(cfg) with SendAndReceive
+  def apply(cfg: Config, system: ActorSystem, ec: ExecutionContext) =
+    new AuthServiceClient(AuthServiceClientConfig(cfg), system, ec) with SendAndReceive
 
   implicit val FormDataMarshaller: Marshaller[FormData] =
     Marshaller.delegate[FormData, String](`application/x-www-form-urlencoded`) { (formData, contentType) ⇒
@@ -89,19 +87,19 @@ object AuthServiceClient {
     }
 }
 
-class RetryingUserServiceClient(override val tokenProvider: TokenProvider, cfg: Config)
-  extends AuthServiceClient(cfg) with UserService with AuthRetry {
+class RetryingUserServiceClient(cfg: AuthServiceClientConfig, val tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext)
+  extends AuthServiceClient(cfg, system, ec) with UserService with AuthRetry {
   this: SendAndReceive =>
 
   override def userProfile(userId: Int): Future[UserProfile] = {
     logger.info(s"Retrieving user details for user with id: $userId")
-    withAuthRetry(super.userProfile(userId, _))
+    withAuthRetry(super.userProfile(userId, _))(ec)
   }
 }
 
 object RetryingUserServiceClient {
-  def apply(tokenProvider: TokenProvider, cfg: Config) =
-    new RetryingUserServiceClient(tokenProvider, cfg) with SendAndReceive
+  def apply(cfg: AuthServiceClientConfig, tokenProvider: TokenProvider, system: ActorSystem, ec: ExecutionContext) =
+    new RetryingUserServiceClient(cfg, tokenProvider, system, ec) with SendAndReceive
 }
 
 case class AuthServiceClientConfig(url: URL, timeout: FiniteDuration)

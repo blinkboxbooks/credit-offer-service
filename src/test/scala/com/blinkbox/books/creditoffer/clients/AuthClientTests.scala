@@ -3,6 +3,7 @@ package com.blinkbox.books.creditoffer.clients
 import akka.actor.{ActorRefFactory, ActorSystem}
 import com.blinkbox.books.clients.{SendAndReceive, ThrottledException}
 import com.blinkbox.books.config.Configuration
+import com.blinkbox.books.test.FailHelper
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.{AsyncAssertions, ScalaFutures}
@@ -15,10 +16,9 @@ import spray.http._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
-class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions with Configuration with MockitoSugar {
+class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions with Configuration with MockitoSugar with FailHelper {
 
   val system = ActorSystem("test-system", config)
   val clientCfg = AuthServiceClientConfig(config)
@@ -45,16 +45,8 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
 
   test("Throws ThrottledException when Auth server returns '429 Too Many Requests'") {
     val client = new AuthServiceClient(clientCfg, system, system.dispatcher) with ThrottledSendReceiveMock
-    val w = new Waiter
 
-    client.authenticate("someuser", "somepassword") onComplete {
-      case Success(_) => w.dismiss()
-      case Failure(e) => w(throw e); w.dismiss()
-    }
-
-    val ex = intercept[ThrottledException] {
-      w.await
-    }
+    val ex = failingWith[ThrottledException](client.authenticate("someuser", "somepassword"))
     assert(ex.message == "Retry after 20s")
   }
 
@@ -121,5 +113,4 @@ class AuthClientTests extends FunSuite with ScalaFutures with AsyncAssertions wi
         Future.successful(HttpResponse(StatusCodes.OK, HttpEntity(`application/json`, resp)))
     }
   }
-
 }

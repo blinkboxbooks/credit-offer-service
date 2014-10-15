@@ -1,5 +1,13 @@
 # Change log
 
+## 0.1.16 ([#40](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/40) 2014-10-14 18:07:29)
+
+Added more errors that are treated as temporary
+
+### Bugfix
+
+More server responses are treated as temporary errors.
+
 ## 0.1.15 ([#39](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/39) 2014-09-29 15:11:59)
 
 Fixed failing build

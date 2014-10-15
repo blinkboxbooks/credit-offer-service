@@ -21,63 +21,36 @@ import scala.concurrent.{ExecutionContext, Future}
 @RunWith(classOf[JUnitRunner])
 class ClientPlumbingTests extends FunSuite with ScalaFutures with AsyncAssertions with MockitoSugar with FailHelper {
 
+  val tempFailureCodes = List(BadGateway, ServiceUnavailable, GatewayTimeout, BandwidthLimitExceeded,
+    NetworkAuthenticationRequired, NetworkReadTimeout, NetworkConnectTimeout)
+
   // Settings for whenReady/Waiter. We override the default values because the first call to the mock
   // Feature service takes longer than the default values.
   implicit val defaultPatience = PatienceConfig(timeout = scaled(Span(5, Seconds)), interval = scaled(Span(25, Millis)))
 
-  test("Throws RequestTimeoutException when Auth server returns 408 Request Timeout") {
+  test("Throws RequestTimeoutException when server returns 408 Request Timeout") {
     val client = clientWithMockResponse(HttpResponse(RequestTimeout, HttpEntity.Empty))
 
     failingWith[RequestTimeoutException](client.testMethod)
   }
 
-  test("Throws TemporaryConnectionException when Auth server returns 502 Bad Gateway") {
-    val client = clientWithMockResponse(HttpResponse(BadGateway, HttpEntity.Empty))
+  test("Throws TemporaryConnectionException when server has a temporary problem") {
+    tempFailureCodes.foreach { code =>
+      val client = clientWithMockResponse(HttpResponse(code, HttpEntity.Empty))
 
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == BadGateway)
+      val ex = failingWith[TemporaryConnectionException](client.testMethod)
+      assert(ex.statusCode == code)
+    }
   }
 
-  test("Throws TemporaryConnectionException when Auth server returns 503 Service Unavailable") {
-    val client = clientWithMockResponse(HttpResponse(ServiceUnavailable, HttpEntity.Empty))
+  test("Throws TemporaryConnectionException with a message when server has a temporary problem") {
+    tempFailureCodes.foreach { code =>
+      val client = clientWithMockResponse(HttpResponse(code, HttpEntity("problem description")))
 
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == ServiceUnavailable)
-  }
-
-  test("Throws TemporaryConnectionException when Auth server returns 504 Gateway Timeout") {
-    val client = clientWithMockResponse(HttpResponse(GatewayTimeout, HttpEntity.Empty))
-
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == GatewayTimeout)
-  }
-
-  test("Throws TemporaryConnectionException when Auth server returns 509 Bandwidth Limit Exceeded") {
-    val client = clientWithMockResponse(HttpResponse(BandwidthLimitExceeded, HttpEntity.Empty))
-
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == BandwidthLimitExceeded)
-  }
-
-  test("Throws TemporaryConnectionException when Auth server returns 511 Network Authentication Required") {
-    val client = clientWithMockResponse(HttpResponse(NetworkAuthenticationRequired, HttpEntity.Empty))
-
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == NetworkAuthenticationRequired)
-  }
-
-  test("Throws TemporaryConnectionException when Auth server returns 598 Network Read Timeout") {
-    val client = clientWithMockResponse(HttpResponse(NetworkReadTimeout, HttpEntity.Empty))
-
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == NetworkReadTimeout)
-  }
-
-  test("Throws TemporaryConnectionException when Auth server returns 599 Network Connect Timeout") {
-    val client = clientWithMockResponse(HttpResponse(NetworkConnectTimeout, HttpEntity.Empty))
-
-    val ex = failingWith[TemporaryConnectionException](client.testMethod)
-    assert(ex.statusCode == NetworkConnectTimeout)
+      val ex = failingWith[TemporaryConnectionException](client.testMethod)
+      assert(ex.statusCode == code)
+      assert(ex.message == "problem description")
+    }
   }
 
   def clientWithMockResponse(resp: HttpResponse) =

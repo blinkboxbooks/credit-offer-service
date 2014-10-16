@@ -56,9 +56,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
 
   private def optionallyCredit(userId: Int, granted: Option[GrantedOffer]): Future[Option[AccountCredit]] = granted match {
     case Some(grant) => accountCreditService.addCredit(userId, grant.creditedAmount).map(res => Some(res))
-    case None =>
-      logger.info(s"User with id $userId has been granted the offer already")
-      Future.successful(None)
+    case None => Future.successful(None)
   }
 
   private def sendIfCredited(creditAmount: Option[Money], granted: Option[GrantedOffer], userId: UserId, userProfile: UserProfile, offer: String): Future[Unit] =

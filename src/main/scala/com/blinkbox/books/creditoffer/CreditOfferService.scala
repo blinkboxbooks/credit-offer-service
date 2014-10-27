@@ -4,7 +4,7 @@ import java.util.concurrent.Executors
 
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
-import com.blinkbox.books.config.Configuration
+import com.blinkbox.books.config._
 import com.blinkbox.books.creditoffer.clients._
 import com.blinkbox.books.creditoffer.persistence._
 import com.blinkbox.books.logging.Loggers
@@ -68,9 +68,12 @@ object CreditOfferService extends App with Configuration with StrictLogging with
   val adminAccountCreditService = RetryingAdminAccountCreditServiceClient(config, authTokenProvider, system, clientEc)
   val userService = RetryingUserServiceClient(AuthServiceClientConfig(config), authTokenProvider, system, clientEc)
 
+  // Temporary fix for CP-1998. Remove when the auth server fix for this has been verified and deployed.
+  val delay = config.getFiniteDuration("service.creditOffer.messageProcessingDelay")
+
   val deviceRegistrationHandler = system.actorOf(Props(
     new DeviceRegistrationHandler(offerDao, adminAccountCreditService, userService, eventSender,
-      deviceRegErrorHandler, appConfig.retryTime)), name = "device-registration-event-handler")
+      deviceRegErrorHandler, appConfig.retryTime, delay)), name = "device-registration-event-handler")
 
   // Create the actor that consumes messages from RabbitMQ, and kick it off.
   system.actorOf(Props(new RabbitMqConsumer(consumerConnection.createChannel, appConfig.input,

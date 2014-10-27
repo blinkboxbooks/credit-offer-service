@@ -24,7 +24,7 @@ import scala.concurrent.Future
  */
 class DeviceRegistrationHandler(offerDao: OfferHistoryService,
   accountCreditService: AccountCreditService, userService: UserService,
-  eventSender: EventSender, errorHandler: ErrorHandler, retryInterval: FiniteDuration)
+  eventSender: EventSender, errorHandler: ErrorHandler, retryInterval: FiniteDuration, delay: FiniteDuration)
   extends ReliableEventHandler(errorHandler, retryInterval) with StrictLogging {
 
   import DeviceRegistrationHandler._
@@ -37,6 +37,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     else {
       logger.info(s"Handling Hudl2 registration event. User id: $userId, device id: ${deviceRegistration.device.id}")
       for (
+        _ <- Future(Thread.sleep(delay.toMillis)); // Temporary fix for CP-1998
         userProfile <- userService.userProfile(userId);
         _ <- accountCreditService.currentCredit(userId); // don't proceed if account credit service is not available
         grantedOption <- Future(offerDao.grant(userId, offerCode));

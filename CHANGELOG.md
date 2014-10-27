@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.18 ([#44](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/44) 2014-10-27 12:17:23)
+
+Remove sensitive data from logging
+
+### Bug Fixes
+
+- Removed potentially sensitive user data such as names, email
+addresses from logging that is output when sending events.
+
 ## 0.1.17 ([#42](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/42) 2014-10-15 10:48:36)
 
 Improved logging

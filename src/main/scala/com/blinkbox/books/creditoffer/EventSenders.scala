@@ -1,17 +1,16 @@
 package com.blinkbox.books.creditoffer
 
 import akka.actor.ActorRef
-import akka.pattern.ask
 import akka.util.Timeout
-import com.blinkbox.books.messaging.Event
-import com.blinkbox.books.messaging.EventHeader
+import com.blinkbox.books.logging.RichLogger
+import com.blinkbox.books.messaging.{Event, EventHeader}
 import com.blinkbox.books.schemas.actions.email
 import com.blinkbox.books.schemas.events.user.v2.User
 import com.blinkbox.books.schemas.events.user.v2.User.Credited
 import com.typesafe.scalalogging.slf4j.StrictLogging
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import org.joda.money.Money
+import org.joda.time.DateTime
+
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -39,7 +38,9 @@ class MailerEventSender(delegate: ActorRef, templateName: String, routingId: Str
 
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val content = buildEmailContent(user, creditedAmount, offer)
-    logger.info(s"Sending credit event for Mailer: $content")
+    logger.withContext("userId" -> user.id, "emailTemplateName" -> templateName) {
+      _.info(s"Sending credit event for Mailer")
+    }
     delegate ! Event.xml(content, EventHeader(EventSender.Originator))
   }
 
@@ -80,7 +81,9 @@ class EmailEventSender(delegate: ActorRef, templateName: String)(implicit ec: Ex
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val attributes = Map("firstName" -> user.firstName, "lastName" -> user.lastName)
     val emailTrigger = email.v2.Email.Send(timestamp, email.v2.User(email.v2.UserId(user.id.value), user.username), templateName, attributes)
-    logger.info(s"Sending credit event for ExactTarget: $emailTrigger")
+    logger.withContext("userId" -> user.id, "emailTemplateName" -> templateName) {
+      _.info("Sending credit event for ExactTarget")
+    }
     delegate ! Event.json(EventHeader(EventSender.Originator), emailTrigger)
   }
 
@@ -95,7 +98,9 @@ class ReportingEventSender(delegate: ActorRef)(implicit ec: ExecutionContext, ti
   override def sendEvent(user: User, creditedAmount: Money, timestamp: DateTime, offer: String) = {
     val creditEvent = User.Credited(timestamp, user,
       creditedAmount.getAmount, creditedAmount.getCurrencyUnit.getCurrencyCode, offer)
-    logger.info(s"Sending credit event for Reporting service: $creditEvent")
+    logger.withContext("userId" -> user.id, "creditOffer" -> offer, "creditAmount" -> creditedAmount) {
+      _.info("Sending credit event for Reporting service")
+    }
     delegate ! Event.json(EventHeader(EventSender.Originator), creditEvent)
   }
 

@@ -1,5 +1,14 @@
 # Change log
 
+## 0.1.19 ([#43](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/43) 2014-10-27 11:55:15)
+
+CP-1998: workaround for 404s from auth server
+
+### Improvements:
+
+- Added delay as workaround for CP-1998. This is to avoid triggering suspected race condition when getting device registration messages from auth server, causing 404 errors when getting user details.
+
+
 ## 0.1.18 ([#44](https://git.mobcastdev.com/Hermes/credit-offer-service/pull/44) 2014-10-27 12:17:23)
 
 Remove sensitive data from logging

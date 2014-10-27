@@ -10,7 +10,7 @@ import java.io.IOException
 import java.util.concurrent.TimeoutException
 import org.joda.money.Money
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.Future
+import scala.concurrent.{blocking, Future}
 
 /**
  * Actor that processes device registrations.
@@ -37,7 +37,7 @@ class DeviceRegistrationHandler(offerDao: OfferHistoryService,
     else {
       logger.info(s"Handling Hudl2 registration event. User id: $userId, device id: ${deviceRegistration.device.id}")
       for (
-        _ <- Future(Thread.sleep(delay.toMillis)); // Temporary fix for CP-1998
+        _ <- Future(blocking(Thread.sleep(delay.toMillis))); // Temporary fix for CP-1998
         userProfile <- userService.userProfile(userId);
         _ <- accountCreditService.currentCredit(userId); // don't proceed if account credit service is not available
         grantedOption <- Future(offerDao.grant(userId, offerCode));

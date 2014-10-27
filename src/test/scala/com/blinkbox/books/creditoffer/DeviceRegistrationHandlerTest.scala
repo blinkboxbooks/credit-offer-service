@@ -193,7 +193,7 @@ class DeviceRegistrationHandlerTest extends TestKit(ActorSystem("test-system")) 
 
     /** Create actor under test. */
     def createHandler(): ActorRef = TestActorRef(Props(
-      new DeviceRegistrationHandler(offerDao, accountCreditService, userService, eventSender, errorHandler, retryInterval)))
+      new DeviceRegistrationHandler(offerDao, accountCreditService, userService, eventSender, errorHandler, retryInterval, 1.millis)))
 
     /** Check that the event was processed successfully by checking the various outputs. */
     def checkSuccessfulResult(userId: Int) = {

@@ -9,7 +9,7 @@ Currently, this service only listens for Hudl 2 device registrations and credits
 
 The resource server builds as a standalone Jar file using `sbt`.
 
-It uses the common Blinkbox Books conventions and approaches to configuration, metrics, health endpoints etc., see [the common-config library](/blinkboxbooks/common-config.scala) for details.
+It uses the common Blinkbox Books conventions and approaches to configuration, metrics, health endpoints etc., see [the common-config library](https://github.com/blinkboxbooks/common-config.scala) for details.
 
 
 ## Configuration
@@ -32,4 +32,4 @@ It publishes messages to the `Mail.Sender.Exchange` and `Agora` exchanges.
 
 As the current account credit service doesn't allow querying for past transactions of a given type, this service has to track the state of allocated offers locally.
 
-The schema for the database are held within the [schema](/schema) directory.
+The schema for the database are held within the `schema` directory.

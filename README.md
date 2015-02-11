@@ -7,7 +7,7 @@ Currently, this service only listens for Hudl 2 device registrations and credits
 
 ## Build and run
 
-The resource server builds as a standalone Jar file using `sbt`.
+The service builds as a standalone Jar file using `sbt`.
 
 It uses the common Blinkbox Books conventions and approaches to configuration, metrics, health endpoints etc., see [the common-config library](https://github.com/blinkboxbooks/common-config.scala) for details.
 
